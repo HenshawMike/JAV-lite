@@ -40,6 +40,12 @@ yarn-error.log*
 # vercel
 .vercel
 
+# netlify build artifacts
+.netlify/.next
+.netlify/edge-functions
+.netlify/functions-internal
+.netlify/v1
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
