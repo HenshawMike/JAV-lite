@@ -1,8 +1,8 @@
 'use client'
 
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { signOutAction } from '@/app/auth/actions'
 
 interface LogoutButtonProps {
   /** 'sidebar' renders a full-width row; 'topbar' renders a compact icon button */
@@ -10,15 +10,12 @@ interface LogoutButtonProps {
 }
 
 export function LogoutButton({ variant = 'sidebar' }: LogoutButtonProps) {
-  const supabase = createClient()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
 
   const handleLogout = async () => {
     setLoading(true)
-    await supabase.auth.signOut()
-    router.push('/')
-    router.refresh()
+    await signOutAction()
   }
 
   if (variant === 'topbar') {
