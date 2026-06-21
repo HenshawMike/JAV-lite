@@ -94,6 +94,7 @@ export default function AttendPage() {
         .insert({
           event_id: activeEvent.id,
           student_id: user.id
+          ,status: 'pending'
         })
         .select('marked_at')
         .single()

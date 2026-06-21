@@ -20,6 +20,7 @@ interface Event {
 interface AttendanceRecord {
   student_id: string
   marked_at: string
+  status?: string
 }
 
 interface RecordsPageProps {
@@ -71,7 +72,7 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
       // 3. Fetch attendance records
       const { data: atts, error: attsErr } = await supabase
         .from('attendance')
-        .select('student_id, marked_at')
+        .select('student_id, marked_at, status')
         .eq('event_id', eventId)
 
       if (attsErr) throw attsErr
@@ -93,8 +94,10 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
     const record = attendance.find(a => a.student_id === s.id)
     return {
       student: s,
-      present: !!record,
-      markedAt: record?.marked_at || null
+      present: record?.status === 'confirmed',
+      pending: record?.status === 'pending',
+      markedAt: record?.marked_at || null,
+      rawStatus: record?.status || null
     }
   })
 
@@ -143,7 +146,7 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
 
       const csvRows = targetStudents.map(row => {
         const s = row.student
-        const status = row.present ? 'Present' : 'Absent'
+        const status = row.rawStatus === 'confirmed' ? 'Present' : 'Absent'
         const time = row.markedAt ? new Date(row.markedAt).toISOString() : '—'
         return `"${s.full_name || 'No Name'}","${s.track_no || ''}","${s.department || ''}","L${s.level || ''}","${status}","${time}"`
       })
@@ -328,7 +331,11 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
                       key={row.student.id} 
                       student={row.student} 
                       present={row.present} 
+                      pending={row.pending}
                       markedAt={row.markedAt} 
+                      rawStatus={row.rawStatus}
+                      eventId={event.id}
+                      onConfirm={() => fetchData()}
                     />
                   ))
                 )}

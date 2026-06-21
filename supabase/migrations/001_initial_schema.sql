@@ -31,6 +31,7 @@ create table public.attendance (
   event_id   uuid references public.events(id) on delete cascade not null,
   student_id uuid references public.profiles(id) on delete cascade not null,
   marked_at  timestamptz default now(),
+  status     text default 'pending', -- 'pending' | 'confirmed'
   unique(event_id, student_id)
 );
 
@@ -87,7 +88,7 @@ create policy "Admin write" on public.events
 create policy "Student mark" on public.attendance
   for insert
   to authenticated
-  with check (auth.uid() = student_id);
+  with check (auth.uid() = student_id AND (status IS NULL OR status = 'pending'));
 
 create policy "Self read attendance" on public.attendance
   for select
@@ -99,6 +100,12 @@ create policy "Admin read all attendance" on public.attendance
   to authenticated
   using (exists (select 1 from public.profiles where id = auth.uid() and is_admin = true));
 
+create policy "Admin update status" on public.attendance
+  for update
+  to authenticated
+  using (exists (select 1 from public.profiles where id = auth.uid() and is_admin = true))
+  with check (exists (select 1 from public.profiles where id = auth.uid() and is_admin = true));
+
 -- Table Grants (Required for Supabase projects created after April 2026 to expose tables to the Data API)
 grant select, insert, update on table public.profiles to authenticated;
 grant select on table public.profiles to anon;
@@ -106,6 +113,6 @@ grant select on table public.profiles to anon;
 grant select, insert, update, delete on table public.events to authenticated;
 grant select on table public.events to anon;
 
-grant select, insert, delete on table public.attendance to authenticated;
+grant select, insert, update, delete on table public.attendance to authenticated;
 grant select on table public.attendance to anon;
 

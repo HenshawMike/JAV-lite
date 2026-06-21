@@ -48,7 +48,8 @@ export default function AdminEventsPage() {
       // Fetch attendance counts
       const { data: atts, error: attsErr } = await supabase
         .from('attendance')
-        .select('event_id')
+        .select('event_id, status')
+        .eq('status', 'confirmed')
       
       if (attsErr) throw attsErr
 
