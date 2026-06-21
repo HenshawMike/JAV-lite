@@ -61,14 +61,14 @@ export default function AttendPage() {
 
         if (actEv) {
           setActiveEvent(actEv)
-          
+
           const { data: att } = await supabase
             .from('attendance')
             .select('marked_at')
             .eq('event_id', actEv.id)
             .eq('student_id', u.id)
             .maybeSingle()
-            
+
           if (att) {
             setAlreadyMarked(true)
             setMarkedTime(att.marked_at)
@@ -94,7 +94,7 @@ export default function AttendPage() {
         .insert({
           event_id: activeEvent.id,
           student_id: user.id
-          ,status: 'pending'
+          , status: 'pending'
         })
         .select('marked_at')
         .single()
@@ -117,8 +117,9 @@ export default function AttendPage() {
     }
   }
 
-  const handleLogout = () => {
-    window.location.href = '/auth/signout'
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/')
   }
 
   if (loading) {
@@ -137,10 +138,10 @@ export default function AttendPage() {
 
   return (
     <main className="min-h-[100dvh] bg-bg-tertiary flex flex-col relative overflow-hidden">
-      
+
       {/* Decorative shapes behind dashboard */}
       <div className="ambient-orb bg-primary w-[600px] h-[600px] -top-[300px] -right-[200px]" />
-      
+
       {/* Header */}
       <header className="w-full border-b border-border-default px-5 sm:px-8 py-4 sm:py-5 flex justify-between items-center sticky top-0 bg-bg-primary/95 backdrop-blur-md z-30 shadow-sm relative">
         {/* Left: Brand + Student identity */}
@@ -216,23 +217,23 @@ export default function AttendPage() {
             /* Confirmed Validation State */
             <div className="card-minimal p-8 sm:p-12 border border-success/30 flex flex-col items-center text-center shadow-lg shadow-success/5 bg-gradient-to-b from-bg-primary to-success/5 relative overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-1.5 bg-success" />
-              
+
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-success-glow border-4 border-success flex items-center justify-center text-2xl sm:text-3xl text-success mb-6 font-bold shadow-[0_0_30px_rgba(16,185,129,0.2)]">
                 ✓
               </div>
-              
+
               <Badge text="Boom! You're tapped in." type="success" className="mb-6 scale-110" />
-              
+
               <h2 className="text-2xl sm:text-3xl font-bold text-text-primary mb-2" style={{ fontFamily: "var(--font-rajdhani)" }}>
                 {activeEvent.name}
               </h2>
-              
+
               {activeEvent.description && (
                 <p className="text-xs sm:text-sm text-text-secondary max-w-[380px] italic leading-relaxed text-balance">
                   &ldquo;{activeEvent.description}&rdquo;
                 </p>
               )}
-              
+
               <div className="mt-8 sm:mt-10 border-t border-border-default/50 w-full pt-6 flex flex-col gap-1 items-center">
                 <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-[3px]">Timestamp Hash</span>
                 <code className="text-sm sm:text-base font-mono text-success font-bold mt-1.5 bg-success/10 px-4 py-1.5 rounded-lg border border-success/20">
@@ -298,7 +299,7 @@ export default function AttendPage() {
                   )}
                 </button>
                 <div className="text-center mt-4 text-[11px] text-text-tertiary uppercase tracking-widest font-bold flex items-center justify-center gap-2">
-                  <svg className="w-4 h-4 text-primary" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> As simple as that
+                  <svg className="w-4 h-4 text-primary" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" /></svg> As simple as that
                 </div>
               </div>
             </div>
