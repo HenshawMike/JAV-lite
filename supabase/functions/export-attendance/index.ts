@@ -1,12 +1,12 @@
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://nliatxstysrvbjvrdsfh.supabase.co, http://localhost:3000,https://jav-lite.netlify.app',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, PUT, DELETE',
 }
 
-serve(async (req: { method: string; json: () => PromiseLike<{ eventId: any; department: any }> | { eventId: any; department: any } }) => {
+Deno.serve(async (req: Request) => {
   // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -43,20 +43,21 @@ serve(async (req: { method: string; json: () => PromiseLike<{ eventId: any; depa
     // Fetch attendance records for this event
     const { data: attendance, error: attError } = await supabase
       .from('attendance')
-      .select('student_id, marked_at')
+      .select('student_id, marked_at, status')
       .eq('event_id', eventId)
 
     if (attError) throw attError
 
-    const attendanceIds = new Set(attendance.map((a: { student_id: any; }) => a.student_id))
-
     // Build CSV content
     const header = 'Full Name,Track ID,Department,Level,Status,Time Marked'
-    const rows = (students || []).map((s: { id: unknown; full_name: any; track_no: any; department: any; level: any; }) => {
-      const present = attendanceIds.has(s.id)
-      const record = attendance.find((a: { student_id: any; }) => a.student_id === s.id)
+    const rows = (students || []).map((s: any) => {
+      const record = attendance.find((a: any) => a.student_id === s.id)
+      let statusText = 'Absent'
+      if (record) {
+        statusText = record.status === 'confirmed' ? 'Present' : 'Pending'
+      }
       const time = record?.marked_at ? new Date(record.marked_at).toISOString() : '—'
-      return `"${s.full_name || 'No Name'}","${s.track_no || ''}","${s.department || ''}","L${s.level || ''}","${present ? 'Present' : 'Absent'}","${time}"`
+      return `"${s.full_name || 'No Name'}","${s.track_no || ''}","${s.department || ''}","L${s.level || ''}","${statusText}","${time}"`
     })
 
     const csvContent = [header, ...rows].join('\n')

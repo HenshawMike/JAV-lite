@@ -1,8 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import { signOutAction } from '@/app/auth/actions'
 
 /** Inactivity timeout in milliseconds — 30 minutes */
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000
@@ -26,11 +24,10 @@ interface SessionGuardProps {
  * inactive for SESSION_TIMEOUT_MS (default 30 minutes).
  */
 export function SessionGuard({ children }: SessionGuardProps) {
-  const router = useRouter()
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const signOutAndRedirect = useCallback(async () => {
-    await signOutAction('/?reason=timeout')
+  const signOutAndRedirect = useCallback(() => {
+    window.location.href = '/auth/signout?redirect_to=/?reason=timeout'
   }, [])
 
   const resetTimer = useCallback(() => {

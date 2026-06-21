@@ -1,8 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { signOutAction } from '@/app/auth/actions'
 
 interface LogoutButtonProps {
   /** 'sidebar' renders a full-width row; 'topbar' renders a compact icon button */
@@ -10,12 +8,11 @@ interface LogoutButtonProps {
 }
 
 export function LogoutButton({ variant = 'sidebar' }: LogoutButtonProps) {
-  const router = useRouter()
   const [loading, setLoading] = useState(false)
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     setLoading(true)
-    await signOutAction()
+    window.location.href = '/auth/signout'
   }
 
   if (variant === 'topbar') {
