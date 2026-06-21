@@ -32,9 +32,11 @@ export const AttendanceRow: React.FC<AttendanceRowProps> = ({
   eventId,
   onConfirm
 }) => {
-  const supabase = (global as any)?.window ? null : null
+  const [confirming, setConfirming] = React.useState(false)
+
   const handleConfirm = async () => {
-    if (!eventId) return
+    if (!eventId || confirming) return
+    setConfirming(true)
     try {
       const client = (await import('@/lib/supabase/client')).createClient()
       const { error } = await client
@@ -48,8 +50,11 @@ export const AttendanceRow: React.FC<AttendanceRowProps> = ({
     } catch (err) {
       console.error('Confirm failed', err)
       alert('Failed to confirm attendance')
+    } finally {
+      setConfirming(false)
     }
   }
+
   return (
     <tr className="border-b border-border-default/50 bg-bg-primary hover:bg-bg-secondary transition-colors group">
       <td className="px-6 py-4 whitespace-nowrap pl-6">
@@ -91,7 +96,23 @@ export const AttendanceRow: React.FC<AttendanceRowProps> = ({
             <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-[10px] uppercase tracking-widest font-bold bg-warning/10 border border-warning/20 text-warning">
               <span className="w-1.5 h-1.5 rounded-full bg-warning animate-pulse" /> Pending
             </span>
-            <button onClick={handleConfirm} className="text-xs font-bold text-text-primary underline">Confirm</button>
+            <button
+              onClick={handleConfirm}
+              disabled={confirming}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] uppercase tracking-widest font-bold bg-success/10 border border-success/30 text-success hover:bg-success/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {confirming ? (
+                <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+              {confirming ? 'Confirming…' : 'Confirm'}
+            </button>
           </div>
         ) : (
           <span 

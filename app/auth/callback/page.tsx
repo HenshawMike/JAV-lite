@@ -5,21 +5,21 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 /**
- * OAuth callback page for implicit flow.
- * With implicit flow, Supabase redirects back to this page with tokens in the
- * URL hash fragment (e.g. #access_token=...&refresh_token=...).
- * The Supabase browser client automatically picks up these tokens from the hash,
- * establishes the session, and stores it in cookies via the SSR client.
+ * OAuth callback page — handles implicit flow.
+ * After Google redirects here with #access_token=… in the hash,
+ * onAuthStateChange fires with SIGNED_IN and we route the user.
  */
 export default function AuthCallbackPage() {
   const router = useRouter()
 
   useEffect(() => {
     const supabase = createClient()
+    let handled = false
 
-    // getSession() triggers the client SDK to parse the hash fragment tokens
-    // and persist the session into cookies automatically.
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    async function handleSession(session: any) {
+      if (handled) return
+      handled = true
+
       if (!session?.user) {
         router.replace('/')
         return
@@ -27,16 +27,16 @@ export default function AuthCallbackPage() {
 
       const user = session.user
 
-      // Fetch or create the user's profile
-      let { data: profile, error: profileError } = await supabase
+      // Fetch the user's profile
+      let { data: profile, error: profileErr } = await supabase
         .from('profiles')
         .select('registered, is_admin')
         .eq('id', user.id)
         .single()
 
-      if (profileError?.code === 'PGRST116') {
-        // Profile doesn't exist yet — insert it
-        const { data: newProfile, error: insertError } = await supabase
+      // Create profile if it doesn't exist yet
+      if (profileErr?.code === 'PGRST116' || !profile) {
+        const { data: newProfile } = await supabase
           .from('profiles')
           .insert({
             id: user.id,
@@ -46,10 +46,7 @@ export default function AuthCallbackPage() {
           })
           .select('registered, is_admin')
           .single()
-
-        if (!insertError) {
-          profile = newProfile
-        }
+        profile = newProfile
       }
 
       if (profile?.is_admin) {
@@ -59,7 +56,20 @@ export default function AuthCallbackPage() {
       } else {
         router.replace('/register')
       }
-    })
+    }
+
+    // onAuthStateChange reliably detects implicit-flow tokens from the URL hash.
+    // INITIAL_SESSION fires immediately with existing session (already logged in).
+    // SIGNED_IN fires when tokens are newly parsed from the hash.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+          handleSession(session)
+        }
+      }
+    )
+
+    return () => subscription.unsubscribe()
   }, [router])
 
   return (

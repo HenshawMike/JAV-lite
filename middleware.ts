@@ -27,8 +27,13 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refresh session if expired
-  await supabase.auth.getUser()
+  // Refresh session if expired — wrapped in try/catch so a transient
+  // Supabase network error doesn't crash the Netlify edge function.
+  try {
+    await supabase.auth.getUser()
+  } catch {
+    // Non-fatal: the session cookie will be refreshed on the next request.
+  }
 
   return supabaseResponse
 }

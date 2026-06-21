@@ -47,6 +47,9 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
   const [exportDept, setExportDept] = useState('All')
   const [exporting, setExporting] = useState(false)
 
+  // Bulk confirm state
+  const [confirmingAll, setConfirmingAll] = useState(false)
+
   const fetchData = async () => {
     try {
       // 1. Fetch target event
@@ -88,6 +91,33 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
   useEffect(() => {
     fetchData()
   }, [eventId])
+
+  // Confirm all pending attendance records for this event
+  const handleConfirmAll = async () => {
+    if (confirmingAll) return
+    const pendingIds = attendance
+      .filter(a => a.status === 'pending' || !a.status)
+      .map(a => a.student_id)
+
+    if (pendingIds.length === 0) return
+
+    setConfirmingAll(true)
+    try {
+      const { error } = await supabase
+        .from('attendance')
+        .update({ status: 'confirmed' })
+        .eq('event_id', eventId)
+        .in('student_id', pendingIds)
+
+      if (error) throw error
+      await fetchData()
+    } catch (err) {
+      console.error('Confirm all failed:', err)
+      alert('Failed to confirm all attendance records.')
+    } finally {
+      setConfirmingAll(false)
+    }
+  }
 
   // Map students with attendance status
   const studentsWithStatus = students.map(s => {
@@ -186,9 +216,11 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
 
   if (!event) return null
 
+  const confirmedCount = attendance.filter(a => a.status === 'confirmed').length
+  const pendingCount = attendance.filter(a => a.status === 'pending' || !a.status).length
   const attendeesCount = attendance.length
   const totalStudents = students.length
-  const rate = totalStudents ? Math.round(attendeesCount / totalStudents * 100) : 0
+  const rate = totalStudents ? Math.round(confirmedCount / totalStudents * 100) : 0
 
   return (
     <div className="flex flex-col gap-8 animate-fade-in">
@@ -235,29 +267,55 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
         </div>
       </div>
 
+      {/* Pending confirmation banner */}
+      {pendingCount > 0 && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 bg-warning/5 border border-warning/20 rounded-xl">
+          <div className="flex items-center gap-3">
+            <span className="w-2.5 h-2.5 rounded-full bg-warning animate-pulse flex-shrink-0" />
+            <div>
+              <p className="text-sm font-bold text-warning">
+                {pendingCount} student{pendingCount !== 1 ? 's' : ''} pending confirmation
+              </p>
+              <p className="text-xs text-text-secondary mt-0.5">
+                Marked attendance but not yet confirmed. Review and confirm below.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleConfirmAll}
+            disabled={confirmingAll}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest bg-warning/10 border border-warning/30 text-warning hover:bg-warning/20 transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {confirmingAll ? (
+              <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            ) : (
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            )}
+            {confirmingAll ? 'Confirming…' : `Confirm All ${pendingCount}`}
+          </button>
+        </div>
+      )}
+
       {/* Metrics Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Folks Here', value: `${attendeesCount} / ${totalStudents}` },
-          { label: 'Turnout %', value: `${rate}%` },
-          { label: 'MIA', value: `${totalStudents - attendeesCount} profiles` }
+          { label: 'Confirmed', value: `${confirmedCount}`, color: 'var(--success)' },
+          { label: 'Pending', value: `${pendingCount}`, color: 'var(--warning, #f59e0b)' },
+          { label: 'Turnout %', value: `${rate}%`, color: 'var(--primary)' },
+          { label: 'MIA', value: `${totalStudents - attendeesCount}`, color: 'var(--error)' },
         ].map((item, idx) => (
-          <div key={idx} className="card-minimal p-6 flex flex-col gap-2 border-t-2 overflow-hidden relative" style={{ borderTopColor: idx === 0 ? 'var(--success)' : idx === 1 ? 'var(--primary)' : 'var(--error)' }}>
+          <div key={idx} className="card-minimal p-5 flex flex-col gap-2 border-t-2 overflow-hidden relative" style={{ borderTopColor: item.color }}>
             <span className="block text-[10px] text-text-tertiary tracking-[2px] font-bold uppercase">
               {item.label}
             </span>
             <span className="text-3xl font-bold text-text-primary font-mono tracking-tighter">
               {item.value}
             </span>
-            <div className="absolute -bottom-1 -right-2 text-6xl opacity-5 pointer-events-none">
-              {idx === 0 ? (
-                <svg className="w-16 h-16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path></svg>
-              ) : idx === 1 ? (
-                <span className="text-6xl font-bold font-mono -mt-2 inline-block">%</span>
-              ) : (
-                <svg className="w-16 h-16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
-              )}
-            </div>
           </div>
         ))}
       </div>
