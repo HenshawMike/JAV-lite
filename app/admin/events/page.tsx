@@ -45,16 +45,17 @@ export default function AdminEventsPage() {
       
       if (evsErr) throw evsErr
 
-      // Fetch attendance counts
+      // Fetch attendance counts (all statuses; filter to confirmed in JS)
       const { data: atts, error: attsErr } = await supabase
         .from('attendance')
         .select('event_id, status')
-        .eq('status', 'confirmed')
       
       if (attsErr) throw attsErr
 
       const counts = (atts || []).reduce((acc, a) => {
-        acc[a.event_id] = (acc[a.event_id] || 0) + 1
+        if (a.status === 'confirmed') {
+          acc[a.event_id] = (acc[a.event_id] || 0) + 1
+        }
         return acc
       }, {} as Record<string, number>)
 
