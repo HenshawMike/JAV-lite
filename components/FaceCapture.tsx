@@ -10,12 +10,26 @@ interface FaceCaptureProps {
 export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const showToast = (msg: string) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 3500)
+  }
 
   const handleLocalCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    
+    // Check if file is over 5MB
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('File size exceeds 5MB limit. Please choose a smaller photo.')
+      // Reset input
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      return
+    }
     
     setLoading(true)
     setError(null)
@@ -242,6 +256,14 @@ export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }
           Your photo is used only for attendance identity matching. It is never shared externally.
         </p>
       </div>
+
+      {/* Floating Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[100] animate-fade-in flex items-center gap-3 bg-[var(--error)] text-white px-5 py-3 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/10 max-w-[320px]">
+          <span className="text-xl">⚠️</span>
+          <p className="text-sm font-semibold leading-snug">{toast}</p>
+        </div>
+      )}
     </div>
   )
 }
