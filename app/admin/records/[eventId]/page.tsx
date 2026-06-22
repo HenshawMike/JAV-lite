@@ -176,6 +176,9 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
     }
   })
 
+  // Get active departments dynamically from registered students
+  const activeDepartments = Array.from(new Set(students.map(s => s.department).filter(Boolean))) as string[]
+
   // Filter students
   const filteredRows = studentsWithStatus.filter(row => {
     const s = row.student
@@ -294,8 +297,8 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
           
           <div className="flex gap-2">
             <Select 
-              options={DEPARTMENTS.map(d => ({ value: d, label: d }))}
-              placeholder="Export Dept"
+              options={activeDepartments.map(d => ({ value: d, label: d }))}
+              placeholder="All Departments"
               value={exportDept}
               onChange={(e) => setExportDept(e.target.value || 'All')}
               className="w-[140px] py-2 text-xs bg-bg-primary"
@@ -379,8 +382,8 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
           </div>
           <div className="w-[180px]">
              <Select 
-              options={DEPARTMENTS.map(d => ({ value: d, label: d }))}
-              placeholder="Filter Faculty"
+              options={activeDepartments.map(d => ({ value: d, label: d }))}
+              placeholder="Filter Faculty (All)"
               value={selectedDept}
               onChange={(e) => setSelectedDept(e.target.value || 'All')}
               className="w-full bg-bg-primary"
