@@ -23,9 +23,9 @@ const fmtTime = (isoString: string | null) => {
   }
 }
 
-export const AttendanceRow: React.FC<AttendanceRowProps> = ({ 
-  student, 
-  present, 
+export const AttendanceRow: React.FC<AttendanceRowProps> = ({
+  student,
+  present,
   pending,
   rawStatus,
   markedAt,
@@ -59,9 +59,9 @@ export const AttendanceRow: React.FC<AttendanceRowProps> = ({
     <tr className="border-b border-border-default/50 bg-bg-primary hover:bg-bg-secondary transition-colors group">
       <td className="px-6 py-4 whitespace-nowrap pl-6">
         <div className="flex items-center gap-4">
-          <Avatar 
-            name={student.full_name || 'Student'} 
-            photoUrl={student.photo_url} 
+          <Avatar
+            name={student.full_name || 'Student'}
+            photoUrl={student.photo_url}
             size={36}
             className="ring-2 ring-bg-secondary group-hover:ring-bg-primary transition-all"
           />
@@ -115,14 +115,13 @@ export const AttendanceRow: React.FC<AttendanceRowProps> = ({
             </button>
           </div>
         ) : (
-          <span 
-            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-[10px] uppercase tracking-widest font-bold ${
-              present 
-                ? 'bg-success/10 border border-success/20 text-success' 
+          <span
+            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-[10px] uppercase tracking-widest font-bold ${present
+                ? 'bg-success/10 border border-success/20 text-success'
                 : 'bg-error/10 border border-error/20 text-error'
-            }`}
+              }`}
           >
-            <span 
+            <span
               className={`w-1.5 h-1.5 rounded-full ${present ? 'bg-success animate-pulse shadow-[0_0_8px_var(--color-success)]' : 'bg-error'}`}
             />
             {present ? 'Present' : 'Absent'}

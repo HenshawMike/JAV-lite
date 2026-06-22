@@ -27,6 +27,7 @@ export default function AttendPage() {
   const [activeEvent, setActiveEvent] = useState<Event | null>(null)
   const [alreadyMarked, setAlreadyMarked] = useState(false)
   const [markedTime, setMarkedTime] = useState<string | null>(null)
+  const [attendanceStatus, setAttendanceStatus] = useState<string | null>(null)
   const [marking, setMarking] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -64,7 +65,7 @@ export default function AttendPage() {
 
           const { data: att } = await supabase
             .from('attendance')
-            .select('marked_at')
+            .select('marked_at, status')
             .eq('event_id', actEv.id)
             .eq('student_id', u.id)
             .maybeSingle()
@@ -72,6 +73,7 @@ export default function AttendPage() {
           if (att) {
             setAlreadyMarked(true)
             setMarkedTime(att.marked_at)
+            setAttendanceStatus(att.status)
           }
         }
       } catch (err) {
@@ -83,6 +85,43 @@ export default function AttendPage() {
     checkAuthAndFetch()
   }, [router])
 
+  useEffect(() => {
+    if (!activeEvent || !user) return
+
+    const channel = supabase
+      .channel(`attendance:${activeEvent.id}:${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'attendance',
+          filter: `event_id=eq.${activeEvent.id}`,
+        },
+        (payload) => {
+          const newRecord = payload.new as any
+          const oldRecord = payload.old as any
+          
+          if (payload.eventType === 'DELETE') {
+            if (oldRecord && oldRecord.student_id === user.id) {
+              setAlreadyMarked(false)
+              setMarkedTime(null)
+              setAttendanceStatus(null)
+            }
+          } else if (newRecord && newRecord.student_id === user.id) {
+            setAlreadyMarked(true)
+            setMarkedTime(newRecord.marked_at)
+            setAttendanceStatus(newRecord.status || 'pending')
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [activeEvent, user, supabase])
+
   const handleMarkAttendance = async () => {
     if (!activeEvent || !user) return
     setMarking(true)
@@ -93,22 +132,37 @@ export default function AttendPage() {
         .from('attendance')
         .insert({
           event_id: activeEvent.id,
-          student_id: user.id
-          , status: 'pending'
+          student_id: user.id,
+          status: 'pending'
         })
-        .select('marked_at')
+        .select('marked_at, status')
         .single()
 
       if (markErr) {
         if (markErr.code === '23505') {
-          setAlreadyMarked(true)
-          setMarkedTime(new Date().toISOString())
+          const { data: existing } = await supabase
+            .from('attendance')
+            .select('marked_at, status')
+            .eq('event_id', activeEvent.id)
+            .eq('student_id', user.id)
+            .maybeSingle()
+
+          if (existing) {
+            setAlreadyMarked(true)
+            setMarkedTime(existing.marked_at)
+            setAttendanceStatus(existing.status)
+          } else {
+            setAlreadyMarked(true)
+            setMarkedTime(new Date().toISOString())
+            setAttendanceStatus('pending')
+          }
         } else {
           throw markErr
         }
       } else {
         setAlreadyMarked(true)
         setMarkedTime(data.marked_at)
+        setAttendanceStatus(data.status)
       }
     } catch (err: any) {
       setError(err.message || 'Verification rejected. Please try again.')
@@ -213,9 +267,9 @@ export default function AttendPage() {
                 Nothing&apos;s happening right now. Grab a coffee and check back when the teacher starts the class!
               </p>
             </div>
-          ) : alreadyMarked ? (
+          ) : (alreadyMarked && attendanceStatus === 'confirmed') ? (
             /* Confirmed Validation State */
-            <div className="card-minimal p-8 sm:p-12 border border-success/30 flex flex-col items-center text-center shadow-lg shadow-success/5 bg-gradient-to-b from-bg-primary to-success/5 relative overflow-hidden">
+            <div className="card-minimal p-8 sm:p-12 border border-success/30 flex flex-col items-center text-center shadow-lg shadow-success/5 bg-gradient-to-b from-bg-primary to-success/5 relative overflow-hidden animate-scale-in">
               <div className="absolute top-0 left-0 right-0 h-1.5 bg-success" />
 
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-success-glow border-4 border-success flex items-center justify-center text-2xl sm:text-3xl text-success mb-6 font-bold shadow-[0_0_30px_rgba(16,185,129,0.2)]">
@@ -237,6 +291,35 @@ export default function AttendPage() {
               <div className="mt-8 sm:mt-10 border-t border-border-default/50 w-full pt-6 flex flex-col gap-1 items-center">
                 <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-[3px]">Timestamp Hash</span>
                 <code className="text-sm sm:text-base font-mono text-success font-bold mt-1.5 bg-success/10 px-4 py-1.5 rounded-lg border border-success/20">
+                  {markedTime ? new Date(markedTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—'}
+                </code>
+              </div>
+            </div>
+          ) : (alreadyMarked && (attendanceStatus === 'pending' || !attendanceStatus)) ? (
+            /* Pending Validation State */
+            <div className="card-minimal p-8 sm:p-12 border border-warning/30 flex flex-col items-center text-center shadow-lg shadow-warning/5 bg-gradient-to-b from-bg-primary to-warning/5 relative overflow-hidden animate-scale-in">
+              <div className="absolute top-0 left-0 right-0 h-1.5 bg-warning" />
+
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-warning-glow border-4 border-warning flex items-center justify-center text-2xl sm:text-3xl text-warning mb-6 font-bold shadow-[0_0_30px_rgba(245,158,11,0.2)]">
+                <svg className="w-8 h-8 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              </div>
+
+              <Badge text="Awaiting Admin Approval" type="warning" className="mb-6 scale-110" />
+
+              <h2 className="text-2xl sm:text-3xl font-bold text-text-primary mb-2" style={{ fontFamily: "var(--font-rajdhani)" }}>
+                {activeEvent.name}
+              </h2>
+
+              <p className="text-xs sm:text-sm text-text-secondary max-w-[380px] leading-relaxed text-balance">
+                You have checked in successfully! Please wait a moment while the admin approves your attendance.
+              </p>
+
+              <div className="mt-8 sm:mt-10 border-t border-border-default/50 w-full pt-6 flex flex-col gap-1 items-center">
+                <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-[3px]">Tapped In At</span>
+                <code className="text-sm sm:text-base font-mono text-warning font-bold mt-1.5 bg-warning/10 px-4 py-1.5 rounded-lg border border-warning/20">
                   {markedTime ? new Date(markedTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—'}
                 </code>
               </div>
