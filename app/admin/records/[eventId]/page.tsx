@@ -103,17 +103,28 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
 
     setConfirmingAll(true)
     try {
-      const { error } = await supabase
+      const { data: { session } } = await supabase.auth.getSession()
+      console.log('Client-side session for bulk confirm:', session)
+
+      const { data, error, status, statusText } = await supabase
         .from('attendance')
         .update({ status: 'confirmed' })
         .eq('event_id', eventId)
         .in('student_id', pendingIds)
+        .select()
+
+      console.log('Bulk confirm result:', { data, error, status, statusText })
 
       if (error) throw error
+
+      if (!data || data.length === 0) {
+        throw new Error(`No records updated. Rows might not exist, or permission denied via RLS. Active session: ${!!session}`)
+      }
+
       await fetchData()
-    } catch (err) {
+    } catch (err: any) {
       console.error('Confirm all failed:', err)
-      alert('Failed to confirm all attendance records.')
+      alert('Failed to confirm all attendance records: ' + (err.message || JSON.stringify(err)))
     } finally {
       setConfirmingAll(false)
     }
