@@ -39,28 +39,25 @@ export const AttendanceRow: React.FC<AttendanceRowProps> = ({
     setConfirming(true)
     try {
       const client = (await import('@/lib/supabase/client')).createClient()
-      
-      const { data: { session } } = await client.auth.getSession()
-      console.log('Client-side session:', session)
-      
-      const { data, error, status, statusText } = await client
+
+      const { data: { user } } = await client.auth.getUser()
+      if (!user) throw new Error('You must be logged in to confirm attendance.')
+
+      const { data, error } = await client
         .from('attendance')
         .update({ status: 'confirmed' })
         .eq('event_id', eventId)
         .eq('student_id', student.id)
         .select()
 
-      console.log('Update result:', { data, error, status, statusText })
-
       if (error) throw error
 
       if (!data || data.length === 0) {
-        throw new Error(`No records updated. Row might not exist, or permission denied via RLS. Active session: ${!!session}`)
+        throw new Error('No records updated. Please ensure you have admin permissions and try again.')
       }
 
       onConfirm && onConfirm()
     } catch (err: any) {
-      console.error('Confirm failed', err)
       alert('Failed to confirm attendance: ' + (err.message || JSON.stringify(err)))
     } finally {
       setConfirming(false)

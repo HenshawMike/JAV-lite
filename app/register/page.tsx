@@ -9,30 +9,8 @@ import { Button } from '@/components/ui/Button'
 import { FaceCapture } from '@/components/FaceCapture'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { ComboBox } from '@/components/ui/ComboBox'
-import { LEVELS } from '@/lib/constants'
+import { LEVELS, DEPARTMENTS, FACULTIES } from '@/lib/constants'
 import Image from 'next/image'
-
-const DEFAULT_FACULTIES = [
-  'Faculty Of Natural and Applied Science',
-  'Faculty of Basic Medical Science',
-  'Faculty of Humanities and Social Sciences',
-  'Faculty of Law',
-  'Faculty of Administrative and Management Science',
-
-]
-
-const DEFAULT_DEPARTMENTS = [
-  'Computer Science',
-  'Accounting',
-  'Software Engineering',
-  'Cybersecurity',
-  'Medical Laboratory Science',
-  'Nursing Science',
-  'Mass Communication',
-  'Economics',
-  'Business Administration',
-  'Law',
-]
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -50,8 +28,8 @@ export default function RegisterPage() {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
 
   // Suggestion states
-  const [existingFaculties, setExistingFaculties] = useState<string[]>(DEFAULT_FACULTIES)
-  const [existingDepartments, setExistingDepartments] = useState<string[]>(DEFAULT_DEPARTMENTS)
+  const [existingFaculties, setExistingFaculties] = useState<string[]>(FACULTIES)
+  const [existingDepartments, setExistingDepartments] = useState<string[]>(DEPARTMENTS)
 
   // Interaction states
   const [submitting, setSubmitting] = useState(false)
@@ -95,8 +73,8 @@ export default function RegisterPage() {
           const dbFaculties = profilesData.map(p => p.faculty).filter(Boolean) as string[]
           const dbDepartments = profilesData.map(p => p.department).filter(Boolean) as string[]
 
-          const combinedFaculties = Array.from(new Set([...DEFAULT_FACULTIES, ...dbFaculties]))
-          const combinedDepartments = Array.from(new Set([...DEFAULT_DEPARTMENTS, ...dbDepartments]))
+          const combinedFaculties = Array.from(new Set([...FACULTIES, ...dbFaculties]))
+          const combinedDepartments = Array.from(new Set([...DEPARTMENTS, ...dbDepartments]))
 
           setExistingFaculties(combinedFaculties)
           setExistingDepartments(combinedDepartments)
@@ -170,9 +148,7 @@ export default function RegisterPage() {
     try {
       const { error: updateErr } = await supabase
         .from('profiles')
-        .upsert({
-          id: sessionUser.id,
-          email: sessionUser.email!,
+        .update({
           full_name: fullName.trim(),
           track_no: trackNo.trim(),
           level,
@@ -181,6 +157,7 @@ export default function RegisterPage() {
           photo_url: photoUrl,
           registered: true
         })
+        .eq('id', sessionUser.id)
 
       if (updateErr) throw updateErr
 

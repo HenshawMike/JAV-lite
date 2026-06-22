@@ -106,27 +106,24 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
 
     setConfirmingAll(true)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      console.log('Client-side session for bulk confirm:', session)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('You must be logged in to confirm attendance.')
 
-      const { data, error, status, statusText } = await supabase
+      const { data, error } = await supabase
         .from('attendance')
         .update({ status: 'confirmed' })
         .eq('event_id', eventId)
         .in('student_id', pendingIds)
         .select()
 
-      console.log('Bulk confirm result:', { data, error, status, statusText })
-
       if (error) throw error
 
       if (!data || data.length === 0) {
-        throw new Error(`No records updated. Rows might not exist, or permission denied via RLS. Active session: ${!!session}`)
+        throw new Error('No records updated. Please ensure you have admin permissions and try again.')
       }
 
       await fetchData()
     } catch (err: any) {
-      console.error('Confirm all failed:', err)
       alert('Failed to confirm all attendance records: ' + (err.message || JSON.stringify(err)))
     } finally {
       setConfirmingAll(false)
@@ -137,27 +134,24 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
     if (confirmingId) return
     setConfirmingId(studentId)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      console.log('Client-side session for confirm single:', session)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('You must be logged in to confirm attendance.')
 
-      const { data, error, status, statusText } = await supabase
+      const { data, error } = await supabase
         .from('attendance')
         .update({ status: 'confirmed' })
         .eq('event_id', eventId)
         .eq('student_id', studentId)
         .select()
 
-      console.log('Confirm single result:', { data, error, status, statusText })
-
       if (error) throw error
 
       if (!data || data.length === 0) {
-        throw new Error(`No records updated. Row might not exist, or permission denied via RLS. Active session: ${!!session}`)
+        throw new Error('No records updated. Please ensure you have admin permissions and try again.')
       }
 
       await fetchData()
     } catch (err: any) {
-      console.error('Confirm failed:', err)
       alert('Failed to confirm attendance: ' + (err.message || JSON.stringify(err)))
     } finally {
       setConfirmingId(null)
