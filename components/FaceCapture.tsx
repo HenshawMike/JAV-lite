@@ -138,7 +138,7 @@ export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }
   return (
     <div className="flex flex-col gap-4">
       {/* Frame Box */}
-      <div className="relative w-full aspect-square bg-[var(--bg-secondary)] border border-[var(--primary)]/20 rounded-lg overflow-hidden flex flex-col items-center justify-center p-6">
+      <div className="relative w-full max-w-[280px] sm:max-w-[320px] md:max-w-full aspect-square mx-auto bg-[var(--bg-secondary)] border border-[var(--primary)]/20 rounded-2xl overflow-hidden flex flex-col items-center justify-center p-4 md:p-6 shadow-inner">
         {/* Absolute corner marks */}
         <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-[var(--primary)]" />
         <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-[var(--primary)]" />
