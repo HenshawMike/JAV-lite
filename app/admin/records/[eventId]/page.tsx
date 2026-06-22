@@ -9,6 +9,8 @@ import { Select } from '@/components/ui/Select'
 import { Input } from '@/components/ui/Input'
 import { DEPARTMENTS } from '@/lib/constants'
 import { Profile } from '@/components/StudentCard'
+import { Avatar } from '@/components/ui/Avatar'
+import { Badge } from '@/components/ui/Badge'
 
 interface Event {
   id: string
@@ -38,6 +40,7 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
   const [students, setStudents] = useState<Profile[]>([])
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [confirmingId, setConfirmingId] = useState<string | null>(null)
 
   // Filters & searches
   const [search, setSearch] = useState('')
@@ -127,6 +130,37 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
       alert('Failed to confirm all attendance records: ' + (err.message || JSON.stringify(err)))
     } finally {
       setConfirmingAll(false)
+    }
+  }
+
+  const handleConfirmStudent = async (studentId: string) => {
+    if (confirmingId) return
+    setConfirmingId(studentId)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      console.log('Client-side session for confirm single:', session)
+
+      const { data, error, status, statusText } = await supabase
+        .from('attendance')
+        .update({ status: 'confirmed' })
+        .eq('event_id', eventId)
+        .eq('student_id', studentId)
+        .select()
+
+      console.log('Confirm single result:', { data, error, status, statusText })
+
+      if (error) throw error
+
+      if (!data || data.length === 0) {
+        throw new Error(`No records updated. Row might not exist, or permission denied via RLS. Active session: ${!!session}`)
+      }
+
+      await fetchData()
+    } catch (err: any) {
+      console.error('Confirm failed:', err)
+      alert('Failed to confirm attendance: ' + (err.message || JSON.stringify(err)))
+    } finally {
+      setConfirmingId(null)
     }
   }
 
@@ -357,8 +391,112 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
           </div>
         </div>
 
-        {/* The Table */}
-        <div className="card-minimal overflow-hidden border border-border-default shadow-sm bg-bg-primary">
+        {/* Mobile Cards View (Visible on mobile, hidden on desktop) */}
+        <div className="flex flex-col gap-4 md:hidden">
+          {filteredRows.length === 0 ? (
+            <div className="card-minimal p-10 text-center bg-bg-secondary/30 border-dashed">
+              <div className="flex justify-center mb-3 opacity-30 text-text-tertiary">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              </div>
+              <h3 className="text-sm font-bold text-text-primary mb-1">No matching logs</h3>
+              <span className="text-xs text-text-secondary">Adjust your search parameters.</span>
+            </div>
+          ) : (
+            filteredRows.map((row) => (
+              <div 
+                key={row.student.id} 
+                className="card-minimal p-5 flex flex-col gap-4 bg-bg-primary border border-border-default"
+              >
+                {/* Header: Student Info */}
+                <div className="flex items-center gap-3">
+                  <Avatar name={row.student.full_name || 'Student'} photoUrl={row.student.photo_url} size={40} />
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-bold text-sm text-text-primary truncate" style={{ fontFamily: "var(--font-rajdhani)" }}>
+                      {row.student.full_name || 'No Name'}
+                    </h4>
+                    <p className="text-[10px] text-text-secondary font-mono mt-0.5 truncate">
+                      {row.student.email}
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0 text-right">
+                    <span className="block text-[10px] text-text-tertiary font-mono">
+                      Level {row.student.level || '—'}
+                    </span>
+                    <span className="block text-[10px] text-text-secondary font-mono mt-0.5 bg-bg-tertiary border border-border-default px-1.5 py-0.5 rounded-md font-bold">
+                      {row.student.track_no || '—'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Body: Department & Time */}
+                <div className="flex justify-between items-center text-xs border-t border-b border-border-default/50 py-3">
+                  <div>
+                    <span className="block text-[9px] text-text-tertiary uppercase tracking-wider mb-1">Faculty</span>
+                    {row.student.department ? (
+                      <Badge text={row.student.department} type="department" />
+                    ) : (
+                      <span className="text-text-tertiary">—</span>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <span className="block text-[9px] text-text-tertiary uppercase tracking-wider mb-1">Checked In</span>
+                    <span className="font-mono text-xs font-bold text-text-primary">
+                      {row.markedAt ? new Date(row.markedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Footer: Status Badge & Confirmation Button */}
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <span className="block text-[9px] text-text-tertiary uppercase tracking-wider mb-1">Status</span>
+                    {row.pending ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] uppercase tracking-widest font-bold bg-warning/10 border border-warning/20 text-warning">
+                        <span className="w-1.5 h-1.5 rounded-full bg-warning animate-pulse" /> Pending
+                      </span>
+                    ) : (
+                      <span 
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] uppercase tracking-widest font-bold ${
+                          row.present 
+                            ? 'bg-success/10 border border-success/20 text-success' 
+                            : 'bg-error/10 border border-error/20 text-error'
+                        }`}
+                      >
+                        <span 
+                          className={`w-1.5 h-1.5 rounded-full ${row.present ? 'bg-success animate-pulse shadow-[0_0_8px_var(--color-success)]' : 'bg-error'}`}
+                        />
+                        {row.present ? 'Present' : 'Absent'}
+                      </span>
+                    )}
+                  </div>
+
+                  {row.pending && (
+                    <button
+                      onClick={() => handleConfirmStudent(row.student.id)}
+                      disabled={confirmingId === row.student.id}
+                      className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest bg-success/10 border border-success/30 text-success hover:bg-success/20 transition-colors disabled:opacity-50"
+                    >
+                      {confirmingId === row.student.id ? (
+                        <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                      ) : (
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                      {confirmingId === row.student.id ? 'Confirming…' : 'Confirm'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop Table View (Hidden on mobile) */}
+        <div className="hidden md:block card-minimal overflow-hidden border border-border-default shadow-sm bg-bg-primary">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-border-default text-sm">
               <thead className="bg-bg-secondary border-b border-border-default">

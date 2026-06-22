@@ -177,8 +177,8 @@ export default function AdminDashboard() {
       </div>
 
       {/* Filters row */}
-      <div className="flex gap-4 flex-wrap items-center bg-bg-secondary p-4 rounded-xl border border-border-default shadow-sm">
-        <div className="flex-1 min-w-[240px]">
+      <div className="flex gap-4 flex-wrap items-center bg-bg-secondary p-4 rounded-xl border border-border-default shadow-sm w-full">
+        <div className="flex-1 min-w-[240px] w-full">
           <Input 
             placeholder="Search by name or Track ID..."
             value={search}
@@ -186,7 +186,7 @@ export default function AdminDashboard() {
             className="w-full bg-bg-primary"
           />
         </div>
-        <div className="w-[180px]">
+        <div className="w-full sm:w-[180px]">
           <Select 
             options={activeDepartments.map(d => ({ value: d, label: d }))}
             placeholder="All Departments"
@@ -195,7 +195,7 @@ export default function AdminDashboard() {
             className="w-full bg-bg-primary"
           />
         </div>
-        <div className="w-[140px]">
+        <div className="w-full sm:w-[140px]">
           <Select 
             options={LEVELS.map(l => ({ value: l, label: `Level ${l}` }))}
             placeholder="All Levels"
@@ -204,7 +204,7 @@ export default function AdminDashboard() {
             className="w-full bg-bg-primary"
           />
         </div>
-        <div className="px-4 py-2 bg-bg-tertiary rounded-lg border border-border-default text-xs text-text-tertiary font-mono tracking-wider font-bold h-full flex items-center justify-center">
+        <div className="w-full sm:w-auto px-4 py-2.5 bg-bg-tertiary rounded-lg border border-border-default text-xs text-text-tertiary font-mono tracking-wider font-bold flex items-center justify-center">
           {filteredStudents.length} MATCH{filteredStudents.length !== 1 ? 'ES' : ''}
         </div>
       </div>
@@ -299,7 +299,7 @@ export default function AdminDashboard() {
 
             {/* Attributes Grid */}
             <h3 className="text-[10px] text-text-tertiary font-bold tracking-[3px] uppercase mb-4 pl-1">Quick Peek</h3>
-            <div className="grid grid-cols-2 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
               {[
                 { label: 'Academic Standing', value: `Level ${activeStudent.level || '—'}`, icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v10"></path></svg> },
                 { label: 'Attended Events', value: `${studentAttendedEvents.length} session(s)`, icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> },
