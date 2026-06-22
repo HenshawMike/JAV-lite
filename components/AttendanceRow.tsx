@@ -126,8 +126,8 @@ export const AttendanceRow: React.FC<AttendanceRowProps> = ({
         ) : (
           <span
             className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-[10px] uppercase tracking-widest font-bold ${present
-                ? 'bg-success/10 border border-success/20 text-success'
-                : 'bg-error/10 border border-error/20 text-error'
+              ? 'bg-success/10 border border-success/20 text-success'
+              : 'bg-error/10 border border-error/20 text-error'
               }`}
           >
             <span

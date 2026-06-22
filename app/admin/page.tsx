@@ -21,7 +21,7 @@ const getDeptColor = (dept: string) => {
 
 export default function AdminDashboard() {
   const supabase = createClient()
-  
+
   const [students, setStudents] = useState<Profile[]>([])
   const [events, setEvents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -30,7 +30,7 @@ export default function AdminDashboard() {
   const [search, setSearch] = useState('')
   const [selectedDept, setSelectedDept] = useState('All')
   const [selectedLevel, setSelectedLevel] = useState('All')
-  
+
   // Modal state
   const [activeStudent, setActiveStudent] = useState<Profile | null>(null)
   const [studentAttendedEvents, setStudentAttendedEvents] = useState<any[]>([])
@@ -44,7 +44,7 @@ export default function AdminDashboard() {
           .select('*')
           .eq('registered', true)
           .order('full_name')
-        
+
         if (stdsErr) throw stdsErr
         setStudents(stds || [])
 
@@ -102,11 +102,11 @@ export default function AdminDashboard() {
 
   // Filter students based on inputs
   const filteredStudents = students.filter(s => {
-    const matchesSearch = 
-      !search || 
-      (s.full_name || '').toLowerCase().includes(search.toLowerCase()) || 
+    const matchesSearch =
+      !search ||
+      (s.full_name || '').toLowerCase().includes(search.toLowerCase()) ||
       (s.track_no || '').toLowerCase().includes(search.toLowerCase())
-    
+
     const matchesDept = selectedDept === 'All' || s.department === selectedDept
     const matchesLevel = selectedLevel === 'All' || s.level === selectedLevel
 
@@ -152,7 +152,7 @@ export default function AdminDashboard() {
           if (count === 0) return null
           const color = getDeptColor(d)
           const isActive = selectedDept === d
-          
+
           return (
             <button
               key={d}
@@ -179,7 +179,7 @@ export default function AdminDashboard() {
       {/* Filters row */}
       <div className="flex gap-4 flex-wrap items-center bg-bg-secondary p-4 rounded-xl border border-border-default shadow-sm w-full">
         <div className="flex-1 min-w-[240px] w-full">
-          <Input 
+          <Input
             placeholder="Search by name or Track ID..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -187,7 +187,7 @@ export default function AdminDashboard() {
           />
         </div>
         <div className="w-full sm:w-[180px]">
-          <Select 
+          <Select
             options={activeDepartments.map(d => ({ value: d, label: d }))}
             placeholder="All Departments"
             value={selectedDept}
@@ -196,7 +196,7 @@ export default function AdminDashboard() {
           />
         </div>
         <div className="w-full sm:w-[140px]">
-          <Select 
+          <Select
             options={LEVELS.map(l => ({ value: l, label: `Level ${l}` }))}
             placeholder="All Levels"
             value={selectedLevel}
@@ -234,14 +234,14 @@ export default function AdminDashboard() {
                     Count: {deptStudents.length}
                   </span>
                 </div>
-                
+
                 {/* Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                   {deptStudents.map(s => (
-                    <StudentCard 
-                      key={s.id} 
-                      student={s} 
-                      onClick={() => setActiveStudent(s)} 
+                    <StudentCard
+                      key={s.id}
+                      student={s}
+                      onClick={() => setActiveStudent(s)}
                     />
                   ))}
                 </div>
@@ -253,16 +253,16 @@ export default function AdminDashboard() {
 
       {/* Student Detail Modal */}
       {activeStudent && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 z-[100] animate-fade-in"
           onClick={() => setActiveStudent(null)}
         >
-          <div 
+          <div
             className="bg-bg-primary border border-border-default rounded-2xl p-6 sm:p-10 max-w-[560px] w-full relative shadow-2xl overflow-y-auto max-h-[90vh] animate-scale-in"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close button */}
-            <button 
+            <button
               onClick={() => setActiveStudent(null)}
               className="absolute top-5 right-5 bg-bg-tertiary hover:bg-error hover:text-white hover:border-error text-text-secondary border border-border-default rounded-full w-8 h-8 flex items-center justify-center transition-all cursor-pointer shadow-sm text-sm"
             >
@@ -272,10 +272,10 @@ export default function AdminDashboard() {
             {/* Profile Header */}
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-8 text-center sm:text-left border-b border-border-default pb-8">
               <div className="relative">
-                <Avatar 
-                  name={activeStudent.full_name || 'Student'} 
-                  photoUrl={activeStudent.photo_url} 
-                  size={100} 
+                <Avatar
+                  name={activeStudent.full_name || 'Student'}
+                  photoUrl={activeStudent.photo_url}
+                  size={100}
                   className="shadow-xl ring-4 ring-bg-secondary"
                 />
                 <div className="absolute -bottom-2 -right-2 bg-success text-white text-[10px] uppercase font-bold tracking-widest px-2 py-1 rounded-full border-2 border-bg-primary shadow-sm">
@@ -330,7 +330,7 @@ export default function AdminDashboard() {
                 </div>
               ) : (
                 studentAttendedEvents.map(ev => (
-                  <div 
+                  <div
                     key={ev.id}
                     className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-bg-tertiary border border-border-default rounded-xl p-4 hover:bg-bg-secondary transition-colors"
                   >

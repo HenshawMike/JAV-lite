@@ -11,7 +11,7 @@ export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const showToast = (msg: string) => {
@@ -22,7 +22,7 @@ export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }
   const handleLocalCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    
+
     // Check if file is over 5MB
     if (file.size > 5 * 1024 * 1024) {
       showToast('File size exceeds 5MB limit. Please choose a smaller photo.')
@@ -30,7 +30,7 @@ export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }
       if (fileInputRef.current) fileInputRef.current.value = ''
       return
     }
-    
+
     setLoading(true)
     setError(null)
     try {
@@ -40,15 +40,15 @@ export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }
         img.onload = resolve
         img.onerror = reject
       })
-      
+
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')
-      
+
       // Calculate new dimensions (max 400x400) for local fallback
       let width = img.width
       let height = img.height
       const maxSize = 400
-      
+
       if (width > height) {
         if (width > maxSize) {
           height *= maxSize / width
@@ -60,14 +60,14 @@ export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }
           height = maxSize
         }
       }
-      
+
       canvas.width = width
       canvas.height = height
-      
+
       // Draw and compress to jpeg
       ctx?.drawImage(img, 0, 0, width, height)
       const dataUrl = canvas.toDataURL('image/jpeg', 0.6)
-      
+
       onUpload(dataUrl)
     } catch (err) {
       setError('Failed to process local image capture.')
@@ -161,9 +161,9 @@ export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }
 
         {currentUrl ? (
           <>
-            <img 
-              src={currentUrl} 
-              alt="Captured student identity" 
+            <img
+              src={currentUrl}
+              alt="Captured student identity"
               className="w-full h-full object-cover rounded-md"
             />
             <div className="absolute top-8 right-8 bg-[var(--bg-primary)] border border-[var(--success)]/30 rounded-full px-3 py-1 text-[11px] text-[var(--success)] flex items-center gap-1.5 shadow-md font-semibold">
@@ -179,7 +179,7 @@ export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            
+
             <h3 className="font-bold text-sm text-[var(--text-primary)] mt-2">
               No identity photo captured
             </h3>
@@ -237,15 +237,15 @@ export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }
           <span>⚡</span>
           <span>{currentUrl ? 'Retake locally (Fallback)' : 'Capture locally (Fallback)'}</span>
         </button>
-        
+
         {/* Hidden file input for local fallback */}
-        <input 
-          type="file" 
-          accept="image/*" 
-          capture="user" 
-          ref={fileInputRef} 
-          onChange={handleLocalCapture} 
-          className="hidden" 
+        <input
+          type="file"
+          accept="image/*"
+          capture="user"
+          ref={fileInputRef}
+          onChange={handleLocalCapture}
+          className="hidden"
         />
       </div>
 
