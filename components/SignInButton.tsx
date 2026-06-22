@@ -13,10 +13,16 @@ export const SignInButton: React.FC = () => {
     setLoading(true)
     setError(null)
     try {
+      const isLocal = typeof window !== 'undefined' &&
+        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      const redirectUrl = isLocal
+        ? `${window.location.origin}/auth/callback`
+        : 'https://jav-lite.netlify.app/auth/callback'
+
       const { error: err } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: redirectUrl,
           queryParams: {
             prompt: 'select_account',
           },
@@ -31,9 +37,9 @@ export const SignInButton: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-3 w-full">
-      <Button 
-        onClick={handleSignIn} 
-        variant="primary" 
+      <Button
+        onClick={handleSignIn}
+        variant="primary"
         loading={loading}
         className="w-full py-3.5 text-sm font-bold flex items-center justify-center gap-2.5"
       >
