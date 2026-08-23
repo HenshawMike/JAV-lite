@@ -1,6 +1,7 @@
 import React from 'react'
 import { Avatar } from './ui/Avatar'
 import { Badge } from './ui/Badge'
+import { ArrowRight } from './ui/icons'
 
 export interface Profile {
   id: string
@@ -36,27 +37,27 @@ export const StudentCard: React.FC<StudentCardProps> = ({ student, onClick }) =>
           size={46}
         />
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-sm text-[var(--text-primary)] truncate">
+          <h3 className="font-semibold text-sm text-text-primary truncate">
             {student.full_name || 'No Name'}
           </h3>
-          <code className="block font-mono text-[10px] text-[var(--text-secondary)] mt-0.5">
+          <code className="block font-mono text-[10px] text-text-secondary mt-0.5">
             {student.track_no || 'NO_TRACK_NO'}
           </code>
         </div>
         {student.level && (
-          <span className="text-[10px] bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-full px-2.5 py-0.5 text-[var(--text-secondary)] font-mono flex-shrink-0">
+          <span className="text-[10px] bg-bg-tertiary border border-border-default rounded-full px-2.5 py-0.5 text-text-secondary font-mono flex-shrink-0">
             L{student.level}
           </span>
         )}
       </div>
 
-      <div className="flex justify-between items-center mt-auto">
+      <div className="flex justify-between items-center mt-auto pt-2 border-t border-border-default/40">
         {student.department && (
           <Badge text={student.department} type="department" />
         )}
         {onClick && (
-          <span className="text-xs text-[var(--primary)] font-semibold flex items-center gap-0.5 hover:opacity-80 transition-opacity">
-            View Details <span className="text-[10px]">→</span>
+          <span className="text-xs text-primary font-semibold flex items-center gap-1 hover:opacity-80 transition-opacity ml-auto">
+            View Details <ArrowRight size={13} strokeWidth={2} />
           </span>
         )}
       </div>

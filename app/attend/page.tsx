@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
+import { Coffee, CheckCircle2, Clock, ScanFace, Sparkles, AlertCircle, Loader2 } from '@/components/ui/icons'
 import Image from 'next/image'
 
 interface Event {
@@ -179,11 +180,8 @@ export default function AttendPage() {
   if (loading) {
     return (
       <div className="min-h-[100dvh] bg-bg-primary flex items-center justify-center dynamic-gradient-bg">
-        <div className="flex flex-col items-center gap-6 animate-pulse bg-bg-secondary/40 p-10 rounded-3xl border border-border-default/50 backdrop-blur-xl">
-          <svg className="animate-spin h-12 w-12 text-primary" viewBox="0 0 24 24" fill="none">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-          </svg>
+        <div className="flex flex-col items-center gap-5 animate-pulse bg-bg-secondary/40 p-10 rounded-3xl border border-border-default/50 backdrop-blur-xl">
+          <Loader2 size={40} strokeWidth={2} className="text-primary" />
           <span className="text-text-secondary font-bold tracking-widest text-xs uppercase">Getting things ready...</span>
         </div>
       </div>
@@ -201,7 +199,7 @@ export default function AttendPage() {
         {/* Left: Brand + Student identity */}
         <div className="flex items-center gap-4 sm:gap-6 min-w-0">
           <div className="flex items-center gap-3 pr-4 sm:pr-6 border-r border-border-default flex-shrink-0">
-            <div className="bg-bg-tertiary p-1.5 rounded-lg border border-border-default">
+            <div className="bg-bg-tertiary p-1.5 rounded-xl border border-border-default">
               <Image src="/logo.png" alt="JAV Lite" width={28} height={28} className="select-none w-6 h-6 sm:w-7 sm:h-7" />
             </div>
             <div className="font-bold text-base tracking-[3px] text-text-primary hidden md:flex items-center gap-1.5" style={{ fontFamily: "var(--font-rajdhani)" }}>
@@ -225,7 +223,7 @@ export default function AttendPage() {
           <ThemeToggle />
           <button
             onClick={handleLogout}
-            className="text-[11px] sm:text-xs font-bold text-text-secondary hover:text-text-primary border border-border-default px-3 sm:px-4 py-2.5 rounded-lg hover:bg-bg-secondary transition-all duration-200 cursor-pointer whitespace-nowrap uppercase tracking-wider"
+            className="text-[11px] sm:text-xs font-bold text-text-secondary hover:text-text-primary border border-border-default px-3 sm:px-4 py-2.5 rounded-xl hover:bg-bg-secondary transition-all duration-200 cursor-pointer whitespace-nowrap uppercase tracking-wider"
           >
             <span className="hidden sm:inline">Sign Out</span>
             <span className="sm:hidden">Exit</span>
@@ -257,11 +255,11 @@ export default function AttendPage() {
           {!activeEvent ? (
             /* Standby State */
             <div className="card-minimal p-10 sm:p-14 flex flex-col items-center text-center shadow-lg border-t-4 border-t-border-default bg-bg-primary">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-bg-tertiary border-2 border-border-default flex items-center justify-center text-text-tertiary mb-6 shadow-inner">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-bg-tertiary border border-border-default flex items-center justify-center text-text-tertiary mb-6 shadow-inner">
+                <Coffee size={32} strokeWidth={1.5} className="text-text-tertiary" />
               </div>
               <h2 className="text-lg sm:text-2xl font-bold text-text-primary mb-3 flex items-center gap-2" style={{ fontFamily: "var(--font-rajdhani)" }}>
-                Chilling... <svg className="w-6 h-6 text-text-secondary" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Chilling...
               </h2>
               <p className="text-xs sm:text-sm text-text-secondary leading-relaxed max-w-[340px]">
                 Nothing&apos;s happening right now. Grab a coffee and check back when the teacher starts the class!
@@ -272,8 +270,8 @@ export default function AttendPage() {
             <div className="card-minimal p-8 sm:p-12 border border-success/30 flex flex-col items-center text-center shadow-lg shadow-success/5 bg-gradient-to-b from-bg-primary to-success/5 relative overflow-hidden animate-scale-in">
               <div className="absolute top-0 left-0 right-0 h-1.5 bg-success" />
 
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-success-glow border-4 border-success flex items-center justify-center text-2xl sm:text-3xl text-success mb-6 font-bold shadow-[0_0_30px_rgba(16,185,129,0.2)]">
-                ✓
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-success-glow border-4 border-success flex items-center justify-center text-success mb-6 font-bold shadow-[0_0_30px_rgba(16,185,129,0.2)]">
+                <CheckCircle2 size={36} strokeWidth={2.5} className="text-success" />
               </div>
 
               <Badge text="Boom! You're tapped in." type="success" className="mb-6 scale-110" />
@@ -300,11 +298,8 @@ export default function AttendPage() {
             <div className="card-minimal p-8 sm:p-12 border border-warning/30 flex flex-col items-center text-center shadow-lg shadow-warning/5 bg-gradient-to-b from-bg-primary to-warning/5 relative overflow-hidden animate-scale-in">
               <div className="absolute top-0 left-0 right-0 h-1.5 bg-warning" />
 
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-warning-glow border-4 border-warning flex items-center justify-center text-2xl sm:text-3xl text-warning mb-6 font-bold shadow-[0_0_30px_rgba(245,158,11,0.2)]">
-                <svg className="w-8 h-8 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-warning-glow border-4 border-warning flex items-center justify-center text-warning mb-6 font-bold shadow-[0_0_30px_rgba(245,158,11,0.2)]">
+                <Clock size={34} strokeWidth={2} className="text-warning animate-pulse" />
               </div>
 
               <Badge text="Awaiting Admin Approval" type="warning" className="mb-6 scale-110" />
@@ -352,8 +347,9 @@ export default function AttendPage() {
               )}
 
               {error && (
-                <div className="flex items-center gap-3 bg-error/10 border border-error/30 rounded-lg p-4 text-sm text-error font-semibold shadow-sm">
-                  <span className="text-lg">✖</span> {error}
+                <div className="flex items-center gap-3 bg-error/10 border border-error/30 rounded-xl p-4 text-sm text-error font-semibold shadow-sm">
+                  <AlertCircle size={18} strokeWidth={2} className="flex-shrink-0" />
+                  <span>{error}</span>
                 </div>
               )}
 
@@ -366,23 +362,18 @@ export default function AttendPage() {
                 >
                   {marking ? (
                     <>
-                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
+                      <Loader2 size={20} strokeWidth={2} />
                       Scanning your awesome face...
                     </>
                   ) : (
                     <>
-                      <span className="group-hover:-translate-y-1 transition-transform flex items-center justify-center h-full mr-2">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path><path strokeLinecap="round" strokeLinejoin="round" d="M6 10h6"></path><path strokeLinecap="round" strokeLinejoin="round" d="M9 7v6"></path></svg>
-                      </span>
+                      <ScanFace size={20} strokeWidth={2} className="group-hover:scale-110 transition-transform" />
                       I&apos;M HERE!
                     </>
                   )}
                 </button>
                 <div className="text-center mt-4 text-[11px] text-text-tertiary uppercase tracking-widest font-bold flex items-center justify-center gap-2">
-                  <svg className="w-4 h-4 text-primary" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" /></svg> As simple as that
+                  <Sparkles size={14} strokeWidth={2} className="text-primary" /> As simple as that
                 </div>
               </div>
             </div>

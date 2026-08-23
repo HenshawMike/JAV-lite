@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { SignInButton } from '@/components/SignInButton'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import { ShieldCheck, Zap, Smartphone } from '@/components/ui/icons'
+import { RoleSelect } from '@/components/ui/RoleSelect'
 import Image from 'next/image'
 
 export default async function Home() {
@@ -90,12 +92,12 @@ export default async function Home() {
           {/* Feature List */}
           <div className="mt-12 flex flex-col gap-5">
             {[
-              { icon: <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" /></svg>, title: 'Google Magic', desc: 'Secure login without remembering another password.' },
-              { icon: <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M7 2v11h3v9l7-12h-4l4-8z" /></svg>, title: 'Super Fast', desc: 'Tap a button and poof, you are marked present.' },
-              { icon: <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M19 1H5c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zm0 18H5V5h14v14z" /><path d="M11 22h2v-2h-2z" /></svg>, title: 'Works Everywhere', desc: 'From your phone to your laptop, we got you.' }
+              { icon: <ShieldCheck size={20} strokeWidth={1.75} className="text-primary" />, title: 'Google Magic', desc: 'Secure login without remembering another password.' },
+              { icon: <Zap size={20} strokeWidth={1.75} className="text-accent" />, title: 'Super Fast', desc: 'Tap a button and poof, you are marked present.' },
+              { icon: <Smartphone size={20} strokeWidth={1.75} className="text-primary" />, title: 'Works Everywhere', desc: 'From your phone to your laptop, we got you.' }
             ].map((feature, idx) => (
               <div key={idx} className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-lg bg-bg-primary border border-border-default flex items-center justify-center flex-shrink-0 shadow-sm text-lg">
+                <div className="w-10 h-10 rounded-xl bg-bg-primary border border-border-default flex items-center justify-center flex-shrink-0 shadow-sm">
                   {feature.icon}
                 </div>
                 <div>
@@ -118,40 +120,54 @@ export default async function Home() {
         </div>
       </div>
 
-      {/* Right Pane: Authentication Module (Centered) */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 relative">
-        <div className="w-full max-w-[420px] flex flex-col items-center sm:items-start text-center sm:text-left animate-fade-in" style={{ animationDelay: '0.1s' }}>
+      {/* Mobile View */}
+      <div className="lg:hidden w-full min-h-[100dvh] flex flex-col p-6">
 
-          {/* Mobile Logo Fallback */}
-          <div className="lg:hidden bg-bg-secondary p-3 rounded-2xl border border-border-default shadow-sm mb-8">
-            <Image
-              src="/logo.png"
-              alt="JAV Lite logo"
-              width={40}
-              height={40}
-              className="select-none"
-              priority
-            />
+        {/* Logo — top-left corner */}
+        <div className="flex items-center">
+          <div className="bg-bg-secondary p-2 rounded-xl border border-border-default shadow-sm">
+            <Image src="/logo.png" alt="JAV Lite logo" width={28} height={28} className="select-none" priority />
+          </div>
+        </div>
+
+        {/* Remaining space */}
+        <div className="flex-1 flex flex-col justify-center gap-8 animate-fade-in">
+          <div>
+            <h1
+              className="text-3xl font-bold text-text-primary leading-tight mb-2"
+              style={{ fontFamily: "var(--font-rajdhani)" }}
+            >
+              Welcome to <span className="text-primary">JustAttendVirtually</span>
+            </h1>
+            <p className="text-sm text-text-secondary">Who are you?</p>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl font-bold text-text-primary mb-3 flex items-center gap-3" style={{ fontFamily: "var(--font-rajdhani)" }}>
+          <RoleSelect />
+        </div>
+
+        <p className="text-[11px] text-text-tertiary text-center pt-6">
+          By proceeding, you agree to the{' '}
+          <a href="https://jav.blimtechnologies.com/terms" className="underline">Terms of Service</a> and{' '}
+          <a href="https://jav.blimtechnologies.com/privacy-policy" className="underline">Privacy Policy</a>.
+        </p>
+      </div>
+
+      {/* Desktop / Tablet View */}
+      <div className="hidden lg:flex w-1/2 items-center justify-center p-6 relative">
+        <div className="w-full max-w-[420px] flex flex-col items-start text-left animate-fade-in" style={{ animationDelay: '0.1s' }}>
+          <h2 className="text-3xl sm:text-4xl font-bold text-text-primary mb-3" style={{ fontFamily: "var(--font-rajdhani)" }}>
             Welcome!
           </h2>
-          <p className="text-sm text-text-secondary mb-10 leading-relaxed max-w-[320px] mx-auto sm:mx-0">
-            Log in to check your classes or manage the crew.
+          <p className="text-sm text-text-secondary mb-8 leading-relaxed max-w-[320px]">
+            Who are you?
           </p>
 
-          {/* Form Context */}
-          <div className="w-full bg-bg-secondary border border-border-default p-8 rounded-2xl shadow-sm">
+          <RoleSelect />
 
-
-            <SignInButton />
-
-
-          </div>
-
-          <p className="mt-8 text-[11px] text-text-tertiary text-center sm:text-left w-full">
-            By proceeding, you agree to the <a href="https://jav.blimtechnologies.com/terms" className="underline hover:text-text-primary">Terms of Service</a> and <a href="https://jav.blimtechnologies.com/privacy-policy" className="underline hover:text-text-primary">Privacy Policy</a>.
+          <p className="mt-8 text-[11px] text-text-tertiary text-left w-full">
+            By proceeding, you agree to the{' '}
+            <a href="https://jav.blimtechnologies.com/terms" className="underline hover:text-text-primary">Terms of Service</a> and{' '}
+            <a href="https://jav.blimtechnologies.com/privacy-policy" className="underline hover:text-text-primary">Privacy Policy</a>.
           </p>
         </div>
       </div>

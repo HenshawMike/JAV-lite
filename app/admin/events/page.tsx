@@ -6,6 +6,16 @@ import { createClient } from '@/lib/supabase/client'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
+import { 
+  Radio, 
+  FileText, 
+  Play, 
+  Trash2, 
+  CalendarX, 
+  CalendarPlus, 
+  AlertCircle, 
+  Loader2 
+} from '@/components/ui/icons'
 
 interface Event {
   id: string
@@ -177,11 +187,8 @@ export default function AdminEventsPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 gap-6 animate-pulse">
-        <svg className="animate-spin h-10 w-10 text-primary" viewBox="0 0 24 24" fill="none">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-        </svg>
+      <div className="flex flex-col items-center justify-center py-32 gap-5 animate-pulse">
+        <Loader2 size={36} strokeWidth={2} className="text-primary" />
         <span className="text-text-secondary font-bold tracking-[3px] uppercase text-xs">Synchronizing Calendar...</span>
       </div>
     )
@@ -236,6 +243,7 @@ export default function AdminEventsPage() {
                   variant="secondary"
                   className="py-3 px-5 text-xs font-bold border-border-default bg-bg-secondary hover:border-primary flex-1 sm:flex-none justify-center gap-2"
                 >
+                  <FileText size={14} strokeWidth={2} />
                   <span className="text-primary font-mono bg-primary/10 px-1.5 py-0.5 rounded">{activeEvent.attendance_count}</span>
                   Logs
                 </Button>
@@ -250,7 +258,7 @@ export default function AdminEventsPage() {
             </div>
           ) : (
             <div className="card-minimal p-10 text-center flex flex-col gap-3 shadow-none border-dashed bg-transparent items-center">
-               <svg className="w-10 h-10 mb-2 opacity-30 text-text-secondary" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path></svg>
+               <Radio size={36} strokeWidth={1.5} className="text-text-tertiary opacity-40 mb-1" />
                <h3 className="text-base font-bold text-text-primary">System Idle</h3>
                <p className="text-xs text-text-secondary max-w-[300px]">No active session currently broadcasting. Terminals are in standby.</p>
             </div>
@@ -294,25 +302,29 @@ export default function AdminEventsPage() {
                     <Button 
                       onClick={() => router.push(`/admin/records/${ev.id}`)}
                       variant="secondary"
-                      className="py-2.5 px-0 sm:px-4 text-xs font-bold w-full sm:w-auto"
+                      className="py-2.5 px-0 sm:px-4 text-xs font-bold w-full sm:w-auto flex items-center justify-center gap-1.5"
                     >
-                      Logs <span className="ml-1 text-primary font-mono">{ev.attendance_count}</span>
+                      <FileText size={13} strokeWidth={2} />
+                      <span>Logs</span>
+                      <span className="text-primary font-mono ml-0.5">{ev.attendance_count}</span>
                     </Button>
                     <Button
                       onClick={() => handleActivateEvent(ev.id)}
                       variant="secondary"
                       loading={actioningId === ev.id}
-                      className="py-2.5 px-0 sm:px-4 text-xs font-bold w-full sm:w-auto hover:text-success hover:border-success/40"
+                      className="py-2.5 px-0 sm:px-4 text-xs font-bold w-full sm:w-auto hover:text-success hover:border-success/40 flex items-center justify-center gap-1.5"
                     >
-                      Boot
+                      <Play size={13} strokeWidth={2} />
+                      <span>Boot</span>
                     </Button>
                     <Button
                       onClick={() => handleDeleteEvent(ev.id)}
                       variant="secondary"
                       loading={actioningId === ev.id}
-                      className="py-2.5 px-0 sm:px-4 text-xs font-bold w-full sm:w-auto hover:bg-error hover:text-white hover:border-error"
+                      className="py-2.5 px-0 sm:px-4 text-xs font-bold w-full sm:w-auto hover:bg-error hover:text-white hover:border-error flex items-center justify-center gap-1.5"
                     >
-                      Drop
+                      <Trash2 size={13} strokeWidth={2} />
+                      <span>Drop</span>
                     </Button>
                   </div>
                 </div>
@@ -328,9 +340,14 @@ export default function AdminEventsPage() {
           New Event
         </h2>
         <form onSubmit={handleCreateEvent} className="card-minimal p-6 sm:p-8 flex flex-col gap-6 shadow-md border-t-4 border-t-primary bg-bg-secondary">
-          <div className="mb-2">
-            <h3 className="text-xl font-bold text-text-primary" style={{ fontFamily: "var(--font-rajdhani)" }}>Plan a Hangout</h3>
-            <p className="text-xs text-text-secondary mt-1">Get the squad together.</p>
+          <div className="mb-2 flex items-center justify-between">
+            <div>
+              <h3 className="text-xl font-bold text-text-primary" style={{ fontFamily: "var(--font-rajdhani)" }}>Plan a Hangout</h3>
+              <p className="text-xs text-text-secondary mt-1">Get the squad together.</p>
+            </div>
+            <div className="p-2.5 rounded-xl bg-bg-tertiary border border-border-default text-primary">
+              <CalendarPlus size={20} strokeWidth={1.75} />
+            </div>
           </div>
           
           <div className="flex flex-col gap-5">
@@ -358,8 +375,9 @@ export default function AdminEventsPage() {
           </div>
 
           {formErr && (
-            <div className="bg-error/10 border border-error/30 rounded-lg p-4 text-sm text-error font-semibold flex items-center gap-2">
-              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg> {formErr}
+            <div className="bg-error/10 border border-error/30 rounded-xl p-3.5 text-sm text-error font-semibold flex items-center gap-2.5">
+              <AlertCircle size={16} strokeWidth={2} className="flex-shrink-0" />
+              <span>{formErr}</span>
             </div>
           )}
 

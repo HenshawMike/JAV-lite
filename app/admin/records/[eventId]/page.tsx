@@ -7,10 +7,21 @@ import { AttendanceRow } from '@/components/AttendanceRow'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
 import { Input } from '@/components/ui/Input'
-import { DEPARTMENTS } from '@/lib/constants'
 import { Profile } from '@/components/StudentCard'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
+import { 
+  ArrowLeft, 
+  Download, 
+  CheckCheck, 
+  Check, 
+  SearchX, 
+  UserCheck, 
+  Clock, 
+  TrendingUp, 
+  UserX, 
+  Loader2 
+} from '@/components/ui/icons'
 
 interface Event {
   id: string
@@ -246,11 +257,8 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 gap-6 animate-pulse">
-        <svg className="animate-spin h-10 w-10 text-primary" viewBox="0 0 24 24" fill="none">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-        </svg>
+      <div className="flex flex-col items-center justify-center py-32 gap-5 animate-pulse">
+        <Loader2 size={36} strokeWidth={2} className="text-primary" />
         <span className="text-text-secondary font-bold tracking-[3px] uppercase text-xs">Counting heads...</span>
       </div>
     )
@@ -271,9 +279,9 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
       <div className="flex flex-col gap-4 relative z-10 border-b border-border-default pb-6">
         <button 
           onClick={() => router.push('/admin/events')}
-          className="text-xs font-bold uppercase tracking-widest text-text-tertiary flex items-center gap-2 hover:text-text-primary transition-colors underline-offset-4 hover:underline self-start"
+          className="text-xs font-bold uppercase tracking-widest text-text-tertiary flex items-center gap-2 hover:text-text-primary transition-colors underline-offset-4 hover:underline self-start cursor-pointer"
         >
-          <svg className="w-4 h-4 ml-0.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> Back to Calendar
+          <ArrowLeft size={16} strokeWidth={2} /> Back to Calendar
         </button>
 
         <div className="flex justify-between items-start gap-4 flex-wrap mt-2">
@@ -289,21 +297,22 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
             </div>
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <Select 
               options={activeDepartments.map(d => ({ value: d, label: d }))}
               placeholder="All Departments"
               value={exportDept}
               onChange={(e) => setExportDept(e.target.value || 'All')}
-              className="w-[140px] py-2 text-xs bg-bg-primary"
+              className="w-[150px] py-2.5 text-xs bg-bg-primary"
             />
             <Button 
               onClick={handleExportCSV}
               variant="primary"
               loading={exporting}
-              className="py-2.5 px-6 text-xs font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5"
+              className="py-2.5 px-5 text-xs font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 flex items-center gap-2"
             >
-              Export CSV →
+              <Download size={14} strokeWidth={2} />
+              Export CSV
             </Button>
           </div>
         </div>
@@ -326,17 +335,12 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
           <button
             onClick={handleConfirmAll}
             disabled={confirmingAll}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest bg-warning/10 border border-warning/30 text-warning hover:bg-warning/20 transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest bg-warning/10 border border-warning/30 text-warning hover:bg-warning/20 transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {confirmingAll ? (
-              <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
+              <Loader2 size={14} strokeWidth={2} />
             ) : (
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <CheckCheck size={14} strokeWidth={2} />
             )}
             {confirmingAll ? 'Confirming…' : `Confirm All ${pendingCount}`}
           </button>
@@ -346,15 +350,18 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
       {/* Metrics Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Confirmed', value: `${confirmedCount}`, color: 'var(--success)' },
-          { label: 'Pending', value: `${pendingCount}`, color: 'var(--warning, #f59e0b)' },
-          { label: 'Turnout %', value: `${rate}%`, color: 'var(--primary)' },
-          { label: 'MIA', value: `${totalStudents - attendeesCount}`, color: 'var(--error)' },
+          { label: 'Confirmed', value: `${confirmedCount}`, color: 'var(--success)', icon: <UserCheck size={18} strokeWidth={1.75} className="text-success" /> },
+          { label: 'Pending', value: `${pendingCount}`, color: 'var(--warning, #f59e0b)', icon: <Clock size={18} strokeWidth={1.75} className="text-warning" /> },
+          { label: 'Turnout %', value: `${rate}%`, color: 'var(--primary)', icon: <TrendingUp size={18} strokeWidth={1.75} className="text-primary" /> },
+          { label: 'MIA', value: `${totalStudents - attendeesCount}`, color: 'var(--error)', icon: <UserX size={18} strokeWidth={1.75} className="text-error" /> },
         ].map((item, idx) => (
           <div key={idx} className="card-minimal p-5 flex flex-col gap-2 border-t-2 overflow-hidden relative" style={{ borderTopColor: item.color }}>
-            <span className="block text-[10px] text-text-tertiary tracking-[2px] font-bold uppercase">
-              {item.label}
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="block text-[10px] text-text-tertiary tracking-[2px] font-bold uppercase">
+                {item.label}
+              </span>
+              <span className="p-1.5 rounded-lg bg-bg-secondary">{item.icon}</span>
+            </div>
             <span className="text-3xl font-bold text-text-primary font-mono tracking-tighter">
               {item.value}
             </span>
@@ -393,7 +400,7 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
           {filteredRows.length === 0 ? (
             <div className="card-minimal p-10 text-center bg-bg-secondary/30 border-dashed">
               <div className="flex justify-center mb-3 opacity-30 text-text-tertiary">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <SearchX size={32} strokeWidth={1.5} />
               </div>
               <h3 className="text-sm font-bold text-text-primary mb-1">No matching logs</h3>
               <span className="text-xs text-text-secondary">Adjust your search parameters.</span>
@@ -471,17 +478,12 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
                     <button
                       onClick={() => handleConfirmStudent(row.student.id)}
                       disabled={confirmingId === row.student.id}
-                      className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest bg-success/10 border border-success/30 text-success hover:bg-success/20 transition-colors disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest bg-success/10 border border-success/30 text-success hover:bg-success/20 transition-colors disabled:opacity-50 cursor-pointer"
                     >
                       {confirmingId === row.student.id ? (
-                        <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                        </svg>
+                        <Loader2 size={13} strokeWidth={2} />
                       ) : (
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
+                        <Check size={13} strokeWidth={2.5} />
                       )}
                       {confirmingId === row.student.id ? 'Confirming…' : 'Confirm'}
                     </button>
@@ -523,7 +525,7 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
                   <tr>
                     <td colSpan={6} className="px-6 py-16 text-center shadow-none bg-bg-secondary/30">
                       <div className="flex justify-center mb-3 opacity-30 text-text-tertiary">
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <SearchX size={32} strokeWidth={1.5} />
                       </div>
                       <h3 className="text-sm font-bold text-text-primary mb-1">No matching logs</h3>
                       <span className="text-xs text-text-secondary">Adjust your search parameters.</span>

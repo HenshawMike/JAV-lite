@@ -2,6 +2,7 @@ import React from 'react'
 import { Avatar } from './ui/Avatar'
 import { Badge } from './ui/Badge'
 import { Profile } from './StudentCard'
+import { Check, CheckCircle2, Clock, XCircle, Loader2 } from '@/components/ui/icons'
 
 interface AttendanceRowProps {
   student: Profile
@@ -78,7 +79,7 @@ export const AttendanceRow: React.FC<AttendanceRowProps> = ({
             <div className="font-bold text-sm text-text-primary truncate" style={{ fontFamily: "var(--font-rajdhani)" }}>
               {student.full_name || 'No Name'}
             </div>
-            <div className="text-[10px] text-text-secondary font-mono mt-1">
+            <div className="text-[10px] text-text-secondary font-mono mt-0.5">
               {student.email}
             </div>
           </div>
@@ -102,37 +103,34 @@ export const AttendanceRow: React.FC<AttendanceRowProps> = ({
       <td className="px-4 py-4 whitespace-nowrap">
         {pending ? (
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-[10px] uppercase tracking-widest font-bold bg-warning/10 border border-warning/20 text-warning">
-              <span className="w-1.5 h-1.5 rounded-full bg-warning animate-pulse" /> Pending
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] uppercase tracking-widest font-bold bg-warning/10 border border-warning/20 text-warning">
+              <Clock size={12} strokeWidth={2.5} className="animate-pulse" /> Pending
             </span>
             <button
               onClick={handleConfirm}
               disabled={confirming}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] uppercase tracking-widest font-bold bg-success/10 border border-success/30 text-success hover:bg-success/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] uppercase tracking-widest font-bold bg-success/10 border border-success/30 text-success hover:bg-success/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {confirming ? (
-                <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
+                <Loader2 size={12} strokeWidth={2} />
               ) : (
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
+                <Check size={12} strokeWidth={2.5} />
               )}
               {confirming ? 'Confirming…' : 'Confirm'}
             </button>
           </div>
         ) : (
           <span
-            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-[10px] uppercase tracking-widest font-bold ${present
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] uppercase tracking-widest font-bold ${present
               ? 'bg-success/10 border border-success/20 text-success'
               : 'bg-error/10 border border-error/20 text-error'
               }`}
           >
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${present ? 'bg-success animate-pulse shadow-[0_0_8px_var(--color-success)]' : 'bg-error'}`}
-            />
+            {present ? (
+              <CheckCircle2 size={12} strokeWidth={2.5} className="text-success" />
+            ) : (
+              <XCircle size={12} strokeWidth={2} className="text-error" />
+            )}
             {present ? 'Present' : 'Absent'}
           </span>
         )}

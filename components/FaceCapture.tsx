@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useRef } from 'react'
+import { Camera, UploadCloud, Zap, ShieldCheck, AlertCircle, CheckCircle2, Loader2, ScanFace } from '@/components/ui/icons'
 
 interface FaceCaptureProps {
   onUpload: (url: string) => void
@@ -152,77 +153,73 @@ export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }
   return (
     <div className="flex flex-col gap-4">
       {/* Frame Box */}
-      <div className="relative w-full max-w-[280px] sm:max-w-[320px] md:max-w-full aspect-square mx-auto bg-[var(--bg-secondary)] border border-[var(--primary)]/20 rounded-2xl overflow-hidden flex flex-col items-center justify-center p-4 md:p-6 shadow-inner">
-        {/* Absolute corner marks */}
-        <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-[var(--primary)]" />
-        <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-[var(--primary)]" />
-        <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-[var(--primary)]" />
-        <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-[var(--primary)]" />
+      <div className="relative w-full max-w-[280px] sm:max-w-[320px] md:max-w-full aspect-square mx-auto bg-bg-secondary border border-primary/20 rounded-2xl overflow-hidden flex flex-col items-center justify-center p-4 md:p-6 shadow-inner">
+        {/* Sleek hairline corner framing marks */}
+        <div className="absolute top-4 left-4 w-5 h-5 border-t-2 border-l-2 border-primary/60 rounded-tl-sm pointer-events-none" />
+        <div className="absolute top-4 right-4 w-5 h-5 border-t-2 border-r-2 border-primary/60 rounded-tr-sm pointer-events-none" />
+        <div className="absolute bottom-4 left-4 w-5 h-5 border-b-2 border-l-2 border-primary/60 rounded-bl-sm pointer-events-none" />
+        <div className="absolute bottom-4 right-4 w-5 h-5 border-b-2 border-r-2 border-primary/60 rounded-br-sm pointer-events-none" />
 
         {currentUrl ? (
           <>
             <img
               src={currentUrl}
               alt="Captured student identity"
-              className="w-full h-full object-cover rounded-md"
+              className="w-full h-full object-cover rounded-xl"
             />
-            <div className="absolute top-8 right-8 bg-[var(--bg-primary)] border border-[var(--success)]/30 rounded-full px-3 py-1 text-[11px] text-[var(--success)] flex items-center gap-1.5 shadow-md font-semibold">
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--success)] animate-pulse" />
-              Photo Captured
+            <div className="absolute top-6 right-6 bg-bg-primary/95 backdrop-blur-md border border-success/30 rounded-full px-3 py-1 text-[11px] text-success flex items-center gap-1.5 shadow-md font-semibold">
+              <CheckCircle2 size={13} strokeWidth={2.5} className="text-success" />
+              Photo Saved
             </div>
           </>
         ) : (
           <div className="flex flex-col items-center justify-center text-center gap-3 select-none">
-            {/* Minimalist face-scan circle icon */}
-            <div className="w-20 h-20 rounded-full border border-[var(--border)] bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--text-secondary)]">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-9 w-9 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+            {/* Minimalist line icon indicator */}
+            <div className="w-16 h-16 rounded-2xl border border-border-default bg-bg-tertiary flex items-center justify-center text-text-tertiary">
+              <ScanFace size={30} strokeWidth={1.5} className="text-primary/70" />
             </div>
 
-            <h3 className="font-bold text-sm text-[var(--text-primary)] mt-2">
+            <h3 className="font-bold text-sm text-text-primary mt-1">
               No identity photo captured
             </h3>
-            <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed max-w-[200px]">
-              Use your webcam or upload an image file below
+            <p className="text-[11px] text-text-secondary leading-relaxed max-w-[200px]">
+              Use your webcam or choose an image file below
             </p>
 
             <button
               type="button"
               onClick={openWidget}
-              className="mt-2 text-xs text-[var(--primary)] font-semibold hover:underline flex items-center gap-1.5 cursor-pointer"
+              className="mt-2 text-xs text-primary font-semibold hover:underline flex items-center gap-1.5 cursor-pointer"
             >
-              📥 Upload image file
+              <UploadCloud size={14} strokeWidth={2} /> Choose image file
             </button>
           </div>
         )}
       </div>
 
       {error && (
-        <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-3 text-xs text-red-400">
-          ⚠️ {error}
+        <div className="bg-error/10 border border-error/20 rounded-xl p-3.5 text-xs text-error font-medium flex items-center gap-2">
+          <AlertCircle size={15} strokeWidth={2} className="flex-shrink-0" />
+          <span>{error}</span>
         </div>
       )}
 
       {/* Capture Action Button */}
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2.5">
         <button
           type="button"
           onClick={openWidget}
           disabled={loading}
-          className="w-full py-3.5 border border-[var(--border)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] font-bold rounded-lg text-sm transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
+          className="w-full py-3.5 border border-border-default bg-bg-secondary hover:bg-bg-tertiary hover:border-primary/40 text-text-primary font-bold rounded-xl text-sm transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-40 shadow-sm"
         >
           {loading ? (
             <span className="flex items-center gap-2">
-              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
+              <Loader2 size={16} strokeWidth={2} className="text-primary" />
               Configuring...
             </span>
           ) : (
             <>
-              <span>📷</span>
+              <Camera size={17} strokeWidth={1.75} className="text-primary" />
               <span>{currentUrl ? 'Retake via Cloud' : 'Capture via Cloud (Recommended)'}</span>
             </>
           )}
@@ -232,9 +229,9 @@ export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }
           type="button"
           onClick={handleFallback}
           disabled={loading}
-          className="w-full py-2.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-semibold text-xs transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40"
+          className="w-full py-2.5 text-text-secondary hover:text-text-primary font-semibold text-xs transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
         >
-          <span>⚡</span>
+          <Zap size={14} strokeWidth={2} className="text-accent" />
           <span>{currentUrl ? 'Retake locally (Fallback)' : 'Capture locally (Fallback)'}</span>
         </button>
 
@@ -250,18 +247,18 @@ export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }
       </div>
 
       {/* Disclaimer Info */}
-      <div className="flex gap-3 p-3 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg text-[10px] text-[var(--text-secondary)] leading-relaxed">
-        <span className="text-xs text-[var(--primary)]">🗹</span>
+      <div className="flex gap-2.5 p-3 bg-bg-secondary/70 border border-border-default rounded-xl text-[10px] text-text-secondary leading-relaxed items-center">
+        <ShieldCheck size={14} strokeWidth={2} className="text-primary flex-shrink-0" />
         <p>
-          Your photo is used only for attendance identity matching. It is never shared externally.
+          Your photo is encrypted and used only for instant identity matching.
         </p>
       </div>
 
       {/* Floating Toast Notification */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-[100] animate-fade-in flex items-center gap-3 bg-[var(--error)] text-white px-5 py-3 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/10 max-w-[320px]">
-          <span className="text-xl">⚠️</span>
-          <p className="text-sm font-semibold leading-snug">{toast}</p>
+        <div className="fixed bottom-6 right-6 z-[100] animate-fade-in flex items-center gap-3 bg-error text-white px-5 py-3 rounded-xl shadow-xl border border-white/10 max-w-[320px]">
+          <AlertCircle size={18} strokeWidth={2} className="flex-shrink-0" />
+          <p className="text-xs font-semibold leading-snug">{toast}</p>
         </div>
       )}
     </div>

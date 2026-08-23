@@ -10,6 +10,7 @@ import { FaceCapture } from '@/components/FaceCapture'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { ComboBox } from '@/components/ui/ComboBox'
 import { LEVELS, DEPARTMENTS, FACULTIES } from '@/lib/constants'
+import { Camera, GraduationCap, ArrowRight, ShieldCheck, AlertCircle, Loader2 } from '@/components/ui/icons'
 import Image from 'next/image'
 
 export default function RegisterPage() {
@@ -175,11 +176,8 @@ export default function RegisterPage() {
   if (loadingSession) {
     return (
       <div className="min-h-[100dvh] bg-bg-primary flex items-center justify-center dynamic-gradient-bg">
-        <div className="card-minimal p-12 flex flex-col items-center gap-6 animate-pulse">
-          <svg className="animate-spin h-10 w-10 text-primary" viewBox="0 0 24 24" fill="none">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-          </svg>
+        <div className="card-minimal p-12 flex flex-col items-center gap-5 animate-pulse">
+          <Loader2 size={36} strokeWidth={2} className="text-primary" />
           <span className="text-text-secondary font-bold tracking-widest uppercase text-xs">Authenticating...</span>
         </div>
       </div>
@@ -239,7 +237,7 @@ export default function RegisterPage() {
             Set Up Your Profile
           </h1>
           <p className="text-lg md:text-xl text-text-secondary leading-relaxed max-w-2xl font-medium opacity-90">
-            Tell us a bit about yourself and snap a quick pic so we can link your beautiful face to your classes!
+            Tell us a bit about yourself and snap a quick pic so we can link your face to your classes!
           </p>
         </div>
 
@@ -255,7 +253,7 @@ export default function RegisterPage() {
                 <h2 className="text-2xl font-bold text-text-primary flex items-center gap-4 mb-3 tracking-wide" style={{ fontFamily: "var(--font-rajdhani)" }}>
                   <span className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary text-xl border border-primary/20">01</span>
                   Selfie Time!
-                  <svg className="w-6 h-6 text-primary ml-auto opacity-80" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                  <Camera size={22} strokeWidth={1.75} className="text-primary ml-auto opacity-80" />
                 </h2>
                 <p className="text-sm text-text-secondary font-medium pl-[56px]">Capture your face for magical check-ins.</p>
               </div>
@@ -268,7 +266,7 @@ export default function RegisterPage() {
               <div className="mt-2 flex items-center gap-3.5 p-5 bg-bg-secondary/80 border border-border-default rounded-xl text-sm font-medium shadow-sm">
                 <div className={`w-3.5 h-3.5 rounded-full shadow-[0_0_12px_currentColor] flex-shrink-0 transition-colors duration-300 ${photoUrl ? 'bg-success text-success' : 'bg-warning text-warning'}`} />
                 <span className={`tracking-wide transition-colors duration-300 ${photoUrl ? 'text-success font-bold' : 'text-warning font-semibold'}`}>
-                  {photoUrl ? "Looking good! Pic saved." : "Waiting for your awesome smile..."}
+                  {photoUrl ? "Looking good! Pic saved." : "Waiting for your photo..."}
                 </span>
               </div>
             </div>
@@ -283,7 +281,7 @@ export default function RegisterPage() {
                 <h2 className="text-2xl font-bold text-text-primary flex items-center gap-4 mb-3 tracking-wide" style={{ fontFamily: "var(--font-rajdhani)" }}>
                   <span className="flex items-center justify-center w-10 h-10 rounded-full bg-bg-tertiary text-text-tertiary text-xl border border-border-default">02</span>
                   School Info
-                  <svg className="w-6 h-6 text-text-tertiary ml-auto opacity-70" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                  <GraduationCap size={22} strokeWidth={1.75} className="text-text-tertiary ml-auto opacity-70" />
                 </h2>
                 <p className="text-sm text-text-secondary font-medium pl-[56px]">Just the basics so we know where to put you.</p>
               </div>
@@ -350,8 +348,9 @@ export default function RegisterPage() {
 
               <div className="pt-10 mt-4 border-t border-border-default/60 flex flex-col gap-6">
                 {error && (
-                  <div className="flex items-center gap-4 p-5 bg-error/5 border border-error/20 rounded-xl text-sm text-error font-medium animate-fade-in shadow-sm">
-                    <span className="text-xl bg-error/10 p-2 rounded-lg">⚠️</span> {error}
+                  <div className="flex items-center gap-3 p-4 bg-error/10 border border-error/20 rounded-xl text-sm text-error font-medium animate-fade-in shadow-sm">
+                    <AlertCircle size={18} strokeWidth={2} className="flex-shrink-0" />
+                    <span>{error}</span>
                   </div>
                 )}
 
@@ -360,12 +359,12 @@ export default function RegisterPage() {
                   variant="primary"
                   loading={submitting}
                   disabled={!fullName || !trackNo || !level || !department || !faculty || !photoUrl || !!trackNoErr || trackNoValidating}
-                  className="w-full py-5 text-[17px] font-bold shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex gap-3 rounded-xl"
+                  className="w-full py-5 text-[17px] font-bold shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 rounded-xl"
                 >
-                  All done! Jump in <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                  All done! Jump in <ArrowRight size={18} strokeWidth={2.5} />
                 </Button>
-                <div className="flex justify-center items-center gap-2.5 mt-2 opacity-80 pt-2">
-                  <svg className="w-4 h-4 text-success drop-shadow-[0_0_4px_var(--color-success)]" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                <div className="flex justify-center items-center gap-2 mt-2 opacity-80 pt-2">
+                  <ShieldCheck size={16} strokeWidth={2} className="text-success" />
                   <p className="text-[11px] text-text-tertiary uppercase tracking-[0.2em] font-bold">
                     Safe & Sound in the cloud
                   </p>

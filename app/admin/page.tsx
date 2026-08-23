@@ -8,6 +8,16 @@ import { Select } from '@/components/ui/Select'
 import { LEVELS, DEPT_COLORS, PALETTE } from '@/lib/constants'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
+import { 
+  SearchX, 
+  GraduationCap, 
+  CalendarCheck, 
+  Calendar, 
+  Globe, 
+  CalendarX, 
+  X, 
+  Loader2 
+} from '@/components/ui/icons'
 
 const getDeptColor = (dept: string) => {
   if (DEPT_COLORS[dept]) return DEPT_COLORS[dept]
@@ -123,11 +133,8 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 gap-6 animate-pulse">
-        <svg className="animate-spin h-10 w-10 text-primary" viewBox="0 0 24 24" fill="none">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-        </svg>
+      <div className="flex flex-col items-center justify-center py-32 gap-5 animate-pulse">
+        <Loader2 size={36} strokeWidth={2} className="text-primary" />
         <span className="text-text-secondary font-bold tracking-[3px] uppercase text-xs">Rounding up the squad...</span>
       </div>
     )
@@ -141,7 +148,7 @@ export default function AdminDashboard() {
           The Squad
         </h1>
         <p className="text-sm text-text-secondary leading-relaxed">
-          Keep an eye on everyone, check out their selfies, and see how the whole crew is doing!
+          Keep an eye on everyone, check out their profile pics, and see how the whole crew is doing!
         </p>
       </div>
 
@@ -212,8 +219,8 @@ export default function AdminDashboard() {
       {/* Students lists grouped by department */}
       {filteredStudents.length === 0 ? (
         <div className="card-minimal p-16 text-center shadow-none border-dashed bg-transparent">
-          <div className="mb-4 flex justify-center opacity-50">
-            <svg className="w-10 h-10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <div className="mb-4 flex justify-center opacity-40">
+            <SearchX size={40} strokeWidth={1.5} className="text-text-tertiary" />
           </div>
           <h3 className="text-lg font-bold text-text-primary mb-1">No matching records</h3>
           <p className="text-sm text-text-secondary">Try adjusting your search criteria or clear your active filters.</p>
@@ -266,7 +273,7 @@ export default function AdminDashboard() {
               onClick={() => setActiveStudent(null)}
               className="absolute top-5 right-5 bg-bg-tertiary hover:bg-error hover:text-white hover:border-error text-text-secondary border border-border-default rounded-full w-8 h-8 flex items-center justify-center transition-all cursor-pointer shadow-sm text-sm"
             >
-              ✕
+              <X size={15} strokeWidth={2} />
             </button>
 
             {/* Profile Header */}
@@ -301,15 +308,15 @@ export default function AdminDashboard() {
             <h3 className="text-[10px] text-text-tertiary font-bold tracking-[3px] uppercase mb-4 pl-1">Quick Peek</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
               {[
-                { label: 'Academic Standing', value: `Level ${activeStudent.level || '—'}`, icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v10"></path></svg> },
-                { label: 'Attended Events', value: `${studentAttendedEvents.length} session(s)`, icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> },
-                { label: 'Enrollment Date', value: activeStudent.created_at ? new Date(activeStudent.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—', icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg> },
-                { label: 'Network Origin', value: 'OAuth Gateway', icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg> }
+                { label: 'Academic Standing', value: `Level ${activeStudent.level || '—'}`, icon: <GraduationCap size={22} strokeWidth={1.75} className="text-primary" /> },
+                { label: 'Attended Events', value: `${studentAttendedEvents.length} session(s)`, icon: <CalendarCheck size={22} strokeWidth={1.75} className="text-success" /> },
+                { label: 'Enrollment Date', value: activeStudent.created_at ? new Date(activeStudent.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—', icon: <Calendar size={22} strokeWidth={1.75} className="text-text-secondary" /> },
+                { label: 'Network Origin', value: 'OAuth Gateway', icon: <Globe size={22} strokeWidth={1.75} className="text-accent" /> }
               ].map(item => (
-                <div key={item.label} className="bg-bg-secondary border border-border-default rounded-xl p-4 flex gap-3 shadow-sm hover:border-primary/30 transition-colors">
-                  <span className="text-xl opacity-50">{item.icon}</span>
+                <div key={item.label} className="bg-bg-secondary border border-border-default rounded-xl p-4 flex items-center gap-3 shadow-sm hover:border-primary/30 transition-colors">
+                  <span className="p-2 rounded-xl bg-bg-tertiary flex items-center justify-center flex-shrink-0">{item.icon}</span>
                   <div>
-                    <span className="block text-[9px] text-text-tertiary font-bold tracking-widest uppercase mb-1">
+                    <span className="block text-[9px] text-text-tertiary font-bold tracking-widest uppercase mb-0.5">
                       {item.label}
                     </span>
                     <span className="text-text-primary font-bold text-sm">
@@ -325,7 +332,7 @@ export default function AdminDashboard() {
             <div className="flex flex-col gap-3 max-h-[220px] overflow-y-auto pr-2 scrollbar-thin">
               {studentAttendedEvents.length === 0 ? (
                 <div className="bg-bg-secondary border border-dashed border-border-default rounded-xl p-8 text-center flex flex-col gap-2 shadow-sm items-center">
-                  <svg className="w-8 h-8 opacity-40 mb-1 text-text-tertiary" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                  <CalendarX size={28} strokeWidth={1.5} className="text-text-tertiary opacity-40 mb-1" />
                   <span className="text-xs text-text-secondary font-medium">No system attendance records found.</span>
                 </div>
               ) : (
