@@ -27,11 +27,12 @@ Deno.serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    // Fetch registered students (optionally filtered by department)
+    // Fetch registered students (optionally filtered by department), exclude lecturers
     let query = supabase
       .from('profiles')
       .select('id, full_name, track_no, department, level')
       .eq('registered', true)
+      .eq('role', 'student')
 
     if (department && department !== 'All') {
       query = query.eq('department', department)
