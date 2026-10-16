@@ -1,3 +1,11 @@
+// ============================================================================
+// [v1 CODE - DEPRECATED IN v2.0]
+// In Version 1.0, this Edge Function exported CSVs using SUPABASE_SERVICE_ROLE_KEY.
+// In Version 2.0 (Build Document v2.0 Decision #8), exports run client-side using
+// Row Level Security (RLS) under the user's authenticated session.
+// Retained for backwards compatibility with v1 event exports.
+// ============================================================================
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {

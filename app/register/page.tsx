@@ -6,10 +6,11 @@ import { createClient } from '@/lib/supabase/client'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
-import { FaceCapture } from '@/components/FaceCapture'
+// [v1 - DEPRECATED in v2.2: Face capture removed from registration]
+// import { FaceCapture } from '@/components/FaceCapture'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { ComboBox } from '@/components/ui/ComboBox'
-import { LEVELS, DEPARTMENTS, FACULTIES } from '@/lib/constants'
+import { LEVELS } from '@/lib/constants'
 import {
   ArrowRight, ArrowLeft, ShieldCheck, AlertCircle, Loader2, CheckCircle2
 } from '@/components/ui/icons'
@@ -31,10 +32,11 @@ export default function RegisterPage() {
   const [level, setLevel] = useState('')
   const [faculty, setFaculty] = useState('')
   const [department, setDepartment] = useState('')
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+  // [v1 - DEPRECATED in v2.2: Photo capture removed]
+  // const [photoUrl, setPhotoUrl] = useState<string | null>(null)
 
-  const [existingFaculties, setExistingFaculties] = useState<string[]>(FACULTIES)
-  const [existingDepartments, setExistingDepartments] = useState<string[]>(DEPARTMENTS)
+  const [existingFaculties, setExistingFaculties] = useState<string[]>([])
+  const [existingDepartments, setExistingDepartments] = useState<string[]>([])
 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -60,7 +62,9 @@ export default function RegisterPage() {
         .single()
 
       if (profile?.registered) {
-        router.push(profile.role === 'lecturer' ? '/lecturer' : '/attend')
+        // [v1 - /attend superseded by /home in v2]
+        // router.push(profile.role === 'lecturer' ? '/lecturer' : '/attend')
+        router.push(profile.role === 'lecturer' ? '/lecturer' : '/home')
         return
       }
 
@@ -69,19 +73,15 @@ export default function RegisterPage() {
       setLoadingSession(false)
 
       try {
-        const { data: profilesData } = await supabase
-          .from('profiles')
-          .select('faculty, department')
-          .not('registered', 'is', false)
-
-        if (profilesData) {
-          const dbFaculties = profilesData.map(p => p.faculty).filter(Boolean) as string[]
-          const dbDepartments = profilesData.map(p => p.department).filter(Boolean) as string[]
-          setExistingFaculties(Array.from(new Set([...FACULTIES, ...dbFaculties])))
-          setExistingDepartments(Array.from(new Set([...DEPARTMENTS, ...dbDepartments])))
-        }
+        // v2.0: faculties and departments come from the org tables, not static constants
+        const [{ data: facultiesData }, { data: departmentsData }] = await Promise.all([
+          supabase.from('faculties').select('name').order('name'),
+          supabase.from('departments').select('name').order('name'),
+        ])
+        if (facultiesData) setExistingFaculties(facultiesData.map(f => f.name))
+        if (departmentsData) setExistingDepartments(departmentsData.map(d => d.name))
       } catch (err) {
-        console.error('Failed to load profile suggestions:', err)
+        console.error('Failed to load org suggestions:', err)
       }
     }
     checkAuthAndLoadSuggestions()
@@ -107,10 +107,12 @@ export default function RegisterPage() {
     }
   }
 
-  const steps = ['selfie', 'about', 'school'] as const
+  // [v1 - DEPRECATED in v2.2: selfie step removed]
+  // const steps = ['selfie', 'about', 'school'] as const
+  const steps = ['about', 'school'] as const
 
   const stepTitles: Record<string, string> = {
-    selfie: 'Selfie time!',
+    // selfie: 'Selfie time!',
     about: 'About you',
     school: 'School info',
   }
@@ -119,7 +121,8 @@ export default function RegisterPage() {
   const isLastStep = step === steps.length - 1
 
   const validateStep = (): string | null => {
-    if (currentKey === 'selfie' && !photoUrl) return 'Please capture your face photo to continue.'
+    // [v1 - DEPRECATED in v2.2: Photo validation removed]
+    // if (currentKey === 'selfie' && !photoUrl) return 'Please capture your face photo to continue.'
     if (currentKey === 'about') {
       if (!fullName.trim() || fullName.trim().length < 2) return 'Full name must be at least 2 characters.'
       if (!trackNo.trim()) return role === 'student' ? 'ID / Track number is required.' : 'Staff ID is required.'
@@ -157,14 +160,17 @@ export default function RegisterPage() {
           level: role === 'student' ? level : null,
           faculty: faculty.trim(),
           department: department.trim(),
-          photo_url: photoUrl,
+          // [v1 - DEPRECATED in v2.2: No photo collected]
+          // photo_url: photoUrl,
           role,
           registered: true
         })
         .eq('id', sessionUser.id)
 
       if (updateErr) throw updateErr
-      router.push(role === 'lecturer' ? '/lecturer' : '/attend')
+      // [v1 - /attend superseded by /home in v2]
+      // router.push(role === 'lecturer' ? '/lecturer' : '/attend')
+      router.push(role === 'lecturer' ? '/lecturer' : '/home')
     } catch (err: any) {
       setError(err.message || 'An error occurred while saving your profile.')
       setSubmitting(false)
@@ -220,9 +226,10 @@ export default function RegisterPage() {
           </div>
 
           <div className="bg-bg-secondary border border-border-default rounded-2xl p-6 md:p-8 flex flex-col gap-6 shadow-sm">
-            {currentKey === 'selfie' && (
+            {/* [v1 - DEPRECATED in v2.2: Face capture step commented out] */}
+            {/* {currentKey === 'selfie' && (
               <FaceCapture onUpload={setPhotoUrl} currentUrl={photoUrl} />
-            )}
+            )} */}
 
             {currentKey === 'about' && (
               <div className="flex flex-col gap-6">

@@ -1,3 +1,11 @@
+// ============================================================================
+// [v1 CODE - DEPRECATED IN v2.0]
+// In Version 1.0, AttendanceRow was used in /admin/records/[eventId] to confirm
+// event attendees individually against the 'attendance' table.
+// In Version 2.0, attendance is marked via verified QR sessions with snapshot data.
+// Retained for backwards compatibility with v1 event records.
+// ============================================================================
+
 import React from 'react'
 import { Avatar } from './ui/Avatar'
 import { Badge } from './ui/Badge'

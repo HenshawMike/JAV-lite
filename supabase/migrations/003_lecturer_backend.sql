@@ -1,5 +1,5 @@
 -- ============================================================
--- 003_lecturer_backend.sql (Idempotent / Safe to re-run)
+-- 003_lecturer_backend.sql (Fixed: No RLS Recursion)
 -- Adds: role column, courses, class_sessions, class_attendance
 -- ============================================================
 
@@ -18,16 +18,23 @@ BEGIN
   END IF;
 END $$;
 
--- Allow lecturers and admins to read all profiles for attendee joins (name, photo, ID)
+-- Drop the recursive policy that caused error 42P17
 DROP POLICY IF EXISTS "Lecturer read all profiles" ON public.profiles;
-CREATE POLICY "Lecturer read all profiles" ON public.profiles
+
+-- Ensure clean, non-recursive SELECT policy on profiles
+DROP POLICY IF EXISTS "Authenticated read profiles" ON public.profiles;
+CREATE POLICY "Authenticated read profiles" ON public.profiles
   FOR SELECT TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE id = auth.uid() AND (role = 'lecturer' OR is_admin = true)
-    )
+  USING (true);
+
+-- Security definer helper to check staff/lecturer role safely without RLS recursion
+CREATE OR REPLACE FUNCTION public.is_staff(user_id uuid)
+RETURNS boolean AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles 
+    WHERE id = user_id AND (role = 'lecturer' OR is_admin = true)
   );
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
 
 -- ── 2. Courses ────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.courses (
@@ -160,8 +167,6 @@ CREATE POLICY "Lecturer confirm attendance" ON public.class_attendance
 DROP POLICY IF EXISTS "Admin read all class attendance" ON public.class_attendance;
 CREATE POLICY "Admin read all class attendance" ON public.class_attendance
   FOR SELECT TO authenticated
-  USING (
-    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true)
-  );
+  USING (public.is_staff(auth.uid()));
 
 GRANT SELECT, INSERT, UPDATE ON public.class_attendance TO authenticated;

@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
-import { RoleSelect } from '@/components/ui/RoleSelect'
 import { BrandCarousel } from '@/components/BrandCarousel'
+import { SignInButton } from '@/components/SignInButton'
+import { GraduationCap, BookOpen, ShieldCheck } from '@/components/ui/icons'
 import Image from 'next/image'
 
 export default async function Home() {
@@ -33,12 +34,25 @@ export default async function Home() {
       }
     }
 
-    if (profile?.is_admin) {
+    if (profile?.is_admin || profile?.role === 'admin') {
       redirect('/admin')
-    } else if (profile?.registered) {
-      redirect(profile.role === 'lecturer' ? '/lecturer' : '/attend')
+    }
+
+    // Check if user has consented / completed role onboarding
+    const { data: consents } = await supabase
+      .from('consents')
+      .select('id')
+      .eq('user_id', user.id)
+      .limit(1)
+
+    const hasOnboarded = Boolean((consents && consents.length > 0) || profile?.registered)
+
+    if (!hasOnboarded) {
+      redirect('/onboarding')
+    } else if (profile?.role === 'lecturer') {
+      redirect('/lecturer')
     } else {
-      redirect('/register')
+      redirect('/home')
     }
   }
 
@@ -69,19 +83,46 @@ export default async function Home() {
         <BrandCarousel />
       </div>
 
-      {/* Right Pane — Role selection content (Desktop) */}
+      {/* Right Pane — Sign in content (Desktop) */}
       <div className="hidden lg:flex w-1/2 min-h-[100dvh] items-center justify-center p-8 relative">
         <div className="w-full max-w-[420px] flex flex-col items-start text-left animate-fade-in" style={{ animationDelay: '0.1s' }}>
-          <h2 className="text-3xl sm:text-4xl font-bold text-text-primary mb-3" style={{ fontFamily: "var(--font-rajdhani)" }}>
-            Welcome!
-          </h2>
-          <p className="text-sm text-text-secondary mb-8 leading-relaxed max-w-[320px]">
-            Who are you?
+          <span className="text-[11px] font-bold tracking-[3px] uppercase text-primary mb-2">
+            Academic Attendance
+          </span>
+          <h1 className="text-3xl sm:text-4xl font-bold text-text-primary mb-3" style={{ fontFamily: "var(--font-rajdhani)" }}>
+            Welcome to <span className="text-primary">JAV Lite</span>
+          </h1>
+          <p className="text-sm text-text-secondary mb-8 leading-relaxed">
+            Sign in with your Google account to get started. You&apos;ll choose whether you are a Student or Lecturer right after signing in.
           </p>
 
-          <RoleSelect />
+          <div className="w-full mb-6">
+            <SignInButton />
+          </div>
 
-          <p className="mt-8 text-[11px] text-text-tertiary text-left w-full">
+          <div className="w-full flex flex-col gap-3 p-4 rounded-2xl bg-bg-secondary border border-border-default mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                <GraduationCap size={18} strokeWidth={2} />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-text-primary">Students</p>
+                <p className="text-[11px] text-text-secondary">Scan live QR codes & check into classes</p>
+              </div>
+            </div>
+            <div className="h-px w-full bg-border-default/60" />
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-accent/10 text-accent flex items-center justify-center flex-shrink-0">
+                <BookOpen size={18} strokeWidth={2} />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-text-primary">Lecturers</p>
+                <p className="text-[11px] text-text-secondary">Broadcast attendance sessions & manage class rosters</p>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-[11px] text-text-tertiary text-left w-full">
             By proceeding, you agree to the{' '}
             <a href="https://jav.blimtechnologies.com/terms" className="underline hover:text-text-primary">Terms of Service</a> and{' '}
             <a href="https://jav.blimtechnologies.com/privacy-policy" className="underline hover:text-text-primary">Privacy Policy</a>.
@@ -98,22 +139,51 @@ export default async function Home() {
           </div>
         </div>
 
-        {/* Remaining space */}
-        <div className="flex-1 flex flex-col justify-center gap-8 animate-fade-in">
+        {/* Center content space */}
+        <div className="flex-1 flex flex-col justify-center gap-6 animate-fade-in my-8">
           <div>
+            <span className="text-[10px] font-bold tracking-[3px] uppercase text-primary">
+              Academic Attendance
+            </span>
             <h1
-              className="text-3xl font-bold text-text-primary leading-tight mb-2"
+              className="text-3xl font-bold text-text-primary leading-tight mt-1 mb-2"
               style={{ fontFamily: "var(--font-rajdhani)" }}
             >
               Welcome to <span className="text-primary">JustAttendVirtually</span>
             </h1>
-            <p className="text-sm text-text-secondary">Who are you?</p>
+            <p className="text-sm text-text-secondary leading-relaxed">
+              Sign in with your Google account to get started. Choose Student or Lecturer next.
+            </p>
           </div>
 
-          <RoleSelect />
+          <div className="w-full">
+            <SignInButton />
+          </div>
+
+          <div className="w-full flex flex-col gap-3 p-4 rounded-2xl bg-bg-secondary border border-border-default">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                <GraduationCap size={18} strokeWidth={2} />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-text-primary">Students</p>
+                <p className="text-[11px] text-text-secondary">Scan live QR codes & check into classes</p>
+              </div>
+            </div>
+            <div className="h-px w-full bg-border-default/60" />
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-accent/10 text-accent flex items-center justify-center flex-shrink-0">
+                <BookOpen size={18} strokeWidth={2} />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-text-primary">Lecturers</p>
+                <p className="text-[11px] text-text-secondary">Broadcast attendance sessions & manage class rosters</p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <p className="text-[11px] text-text-tertiary text-center pt-6">
+        <p className="text-[11px] text-text-tertiary text-center pt-4">
           By proceeding, you agree to the{' '}
           <a href="https://jav.blimtechnologies.com/terms" className="underline">Terms of Service</a> and{' '}
           <a href="https://jav.blimtechnologies.com/privacy-policy" className="underline">Privacy Policy</a>.

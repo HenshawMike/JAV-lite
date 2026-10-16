@@ -1,5 +1,14 @@
 'use client'
 
+// ============================================================================
+// [v1 CODE - DEPRECATED IN v2.0]
+// In Version 1.0, attendance records were viewed and confirmed per event in this
+// route via the 'events' and 'attendance(event_id)' tables.
+// In Version 2.0, session attendance is viewed via unified sessions and exported
+// with RLS-safe CSV/PDF reports.
+// Retained for backwards compatibility with v1 event records.
+// ============================================================================
+
 import React, { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
