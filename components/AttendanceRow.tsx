@@ -52,12 +52,24 @@ export const AttendanceRow: React.FC<AttendanceRowProps> = ({
       const { data: { user } } = await client.auth.getUser()
       if (!user) throw new Error('You must be logged in to confirm attendance.')
 
-      const { data, error } = await client
+      // Try v2 session_id first, fallback to v1 event_id
+      let { data, error } = await client
         .from('attendance')
         .update({ status: 'confirmed' })
-        .eq('event_id', eventId)
+        .eq('session_id', eventId)
         .eq('student_id', student.id)
         .select()
+
+      if (error && (error.code === '42703' || error.message?.includes('session_id'))) {
+        const fallback = await client
+          .from('attendance')
+          .update({ status: 'confirmed' })
+          .eq('event_id', eventId)
+          .eq('student_id', student.id)
+          .select()
+        data = fallback.data
+        error = fallback.error
+      }
 
       if (error) throw error
 

@@ -124,8 +124,8 @@ export default async function Home() {
 
           <p className="text-[11px] text-text-tertiary text-left w-full">
             By proceeding, you agree to the{' '}
-            <a href="https://jav.blimtechnologies.com/terms" className="underline hover:text-text-primary">Terms of Service</a> and{' '}
-            <a href="https://jav.blimtechnologies.com/privacy-policy" className="underline hover:text-text-primary">Privacy Policy</a>.
+            <a href="/terms" className="underline hover:text-text-primary transition-colors">Terms of Service</a> and{' '}
+            <a href="/privacy" className="underline hover:text-text-primary transition-colors">Privacy Policy</a>.
           </p>
         </div>
       </div>
@@ -185,8 +185,8 @@ export default async function Home() {
 
         <p className="text-[11px] text-text-tertiary text-center pt-4">
           By proceeding, you agree to the{' '}
-          <a href="https://jav.blimtechnologies.com/terms" className="underline">Terms of Service</a> and{' '}
-          <a href="https://jav.blimtechnologies.com/privacy-policy" className="underline">Privacy Policy</a>.
+          <a href="/terms" className="underline hover:text-text-primary transition-colors">Terms of Service</a> and{' '}
+          <a href="/privacy" className="underline hover:text-text-primary transition-colors">Privacy Policy</a>.
         </p>
       </div>
 

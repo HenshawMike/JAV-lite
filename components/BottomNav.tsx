@@ -10,61 +10,90 @@ export function BottomNav() {
 
   const isHome = pathname === '/home'
   const isRecords = pathname === '/records'
-  const isProfile = pathname === '/profile'
   const isScan = pathname === '/scan'
+  const isProfile = pathname === '/profile'
+
+  const navItems = [
+    {
+      href: '/home',
+      label: 'Sessions',
+      icon: Home,
+      active: isHome,
+    },
+    {
+      href: '/records',
+      label: 'Records',
+      icon: BookOpen,
+      active: isRecords,
+    },
+    {
+      href: '/scan',
+      label: 'Scan QR',
+      icon: QrCode,
+      active: isScan,
+      isPrimary: true,
+    },
+    {
+      href: '/profile',
+      label: 'Profile',
+      icon: User,
+      active: isProfile,
+    },
+  ]
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-bg-primary/95 backdrop-blur-md border-t border-border-default pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-2 px-6 shadow-lg">
-      <div className="max-w-md mx-auto flex items-center justify-between relative">
-        
-        {/* Home / History */}
-        <Link
-          href="/home"
-          className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all ${
-            isHome ? 'text-primary font-bold' : 'text-text-tertiary hover:text-text-primary'
-          }`}
-        >
-          <Home size={22} strokeWidth={isHome ? 2.5 : 2} />
-          <span className="text-[11px] tracking-tight">Sessions</span>
-        </Link>
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-40 bg-bg-primary/95 backdrop-blur-md border-t border-border-default shadow-[0_-4px_24px_rgba(0,0,0,0.06)]"
+      style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)' }}
+    >
+      <div className="max-w-md mx-auto grid grid-cols-4 items-center h-16 px-2">
+        {navItems.map((item) => {
+          const Icon = item.icon
+          if (item.isPrimary) {
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-label={item.label}
+                className="flex flex-col items-center justify-center gap-0.5 group"
+              >
+                <div
+                  className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200 shadow-md ${
+                    item.active
+                      ? 'bg-gradient-to-tr from-primary to-[#FF9D66] text-white shadow-primary/30 scale-105'
+                      : 'bg-gradient-to-tr from-primary to-[#FF9D66] text-white shadow-primary/20 group-hover:scale-105 group-active:scale-95'
+                  }`}
+                >
+                  <Icon size={22} strokeWidth={2.4} />
+                </div>
+                <span
+                  className={`text-[10px] tracking-tight transition-colors ${
+                    item.active ? 'text-primary font-bold' : 'text-text-secondary font-medium'
+                  }`}
+                >
+                  {item.label}
+                </span>
+              </Link>
+            )
+          }
 
-        {/* My Records */}
-        <Link
-          href="/records"
-          className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all ${
-            isRecords ? 'text-primary font-bold' : 'text-text-tertiary hover:text-text-primary'
-          }`}
-        >
-          <BookOpen size={22} strokeWidth={isRecords ? 2.5 : 2} />
-          <span className="text-[11px] tracking-tight">Records</span>
-        </Link>
-
-        {/* Center Scan Button — 64px raised circle with primary color & accent glow */}
-        <div className="relative -top-5 flex flex-col items-center">
-          <Link
-            href="/scan"
-            aria-label="Scan Attendance QR Code"
-            className="group relative w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white shadow-[0_8px_24px_rgba(196,30,187,0.45)] hover:shadow-[0_12px_32px_rgba(255,157,102,0.6)] hover:scale-105 active:scale-95 transition-all duration-200 border-4 border-bg-primary"
-          >
-            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-primary to-[#FF9D66] opacity-80 group-hover:opacity-100 transition-opacity" />
-            <QrCode size={28} strokeWidth={2.2} className="relative z-10 text-white" />
-          </Link>
-          <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mt-1">
-            Scan QR
-          </span>
-        </div>
-
-        {/* Profile */}
-        <Link
-          href="/profile"
-          className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all ${
-            isProfile ? 'text-primary font-bold' : 'text-text-tertiary hover:text-text-primary'
-          }`}
-        >
-          <User size={22} strokeWidth={isProfile ? 2.5 : 2} />
-          <span className="text-[11px] tracking-tight">Profile</span>
-        </Link>
-
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition-all ${
+                item.active
+                  ? 'text-primary font-bold'
+                  : 'text-text-tertiary hover:text-text-primary font-medium'
+              }`}
+            >
+              <div className="w-6 h-6 flex items-center justify-center">
+                <Icon size={22} strokeWidth={item.active ? 2.5 : 2} />
+              </div>
+              <span className="text-[10px] tracking-tight">{item.label}</span>
+            </Link>
+          )
+        })}
       </div>
     </nav>
   )
