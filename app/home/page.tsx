@@ -26,6 +26,8 @@ import {
   AlertCircle
 } from '@/components/ui/icons'
 
+import { getCachedStudentData, setCachedStudentData } from '@/lib/studentCache'
+
 interface PublicSession {
   id: string
   kind: 'class' | 'event'
@@ -59,13 +61,17 @@ export default function StudentHomePage() {
   const supabaseRef = useRef(createClient())
   const supabase = supabaseRef.current
 
-  const [activeTab, setActiveTab] = useState<'class' | 'event'>('class')
-  const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
-  const [profile, setProfile] = useState<any>(null)
+  const [cachedProfile] = useState(() => getCachedStudentData<any>('profile'))
+  const [cachedSessions] = useState(() => getCachedStudentData<PublicSession[]>('open_sessions'))
+  const [cachedHistory] = useState(() => getCachedStudentData<AttendedRecord[]>('history_records'))
 
-  const [openSessions, setOpenSessions] = useState<PublicSession[]>([])
-  const [historyRecords, setHistoryRecords] = useState<AttendedRecord[]>([])
+  const [activeTab, setActiveTab] = useState<'class' | 'event'>('class')
+  const [loading, setLoading] = useState(!cachedProfile)
+  const [user, setUser] = useState<any>(null)
+  const [profile, setProfile] = useState<any>(cachedProfile)
+
+  const [openSessions, setOpenSessions] = useState<PublicSession[]>(cachedSessions || [])
+  const [historyRecords, setHistoryRecords] = useState<AttendedRecord[]>(cachedHistory || [])
 
   const loadData = useCallback(async () => {
     try {
@@ -92,6 +98,7 @@ export default function StudentHomePage() {
       }
 
       setProfile(prof)
+      setCachedStudentData('profile', prof)
 
       // Check if consent given
       const { data: consentRows } = await supabase
@@ -112,7 +119,9 @@ export default function StudentHomePage() {
         .eq('status', 'open')
         .order('started_at', { ascending: false })
 
-      setOpenSessions((sessionsData as PublicSession[]) || [])
+      const sessList = (sessionsData as PublicSession[]) || []
+      setOpenSessions(sessList)
+      setCachedStudentData('open_sessions', sessList)
 
       // 2. Fetch Student's Attended Records from my_records view
       const { data: recordsData } = await supabase
@@ -120,7 +129,9 @@ export default function StudentHomePage() {
         .select('*')
         .order('marked_at', { ascending: false })
 
-      setHistoryRecords((recordsData as AttendedRecord[]) || [])
+      const recList = (recordsData as AttendedRecord[]) || []
+      setHistoryRecords(recList)
+      setCachedStudentData('history_records', recList)
     } catch (err) {
       console.error('Error loading student home:', err)
     } finally {
@@ -153,11 +164,12 @@ export default function StudentHomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] bg-bg-primary flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-bg-primary flex flex-col items-center justify-center pb-24">
         <div className="flex flex-col items-center gap-4">
           <Loader2 size={36} className="animate-spin text-primary" />
           <p className="text-xs font-bold uppercase tracking-widest text-text-secondary">Loading your sessions...</p>
         </div>
+        <BottomNav />
       </div>
     )
   }

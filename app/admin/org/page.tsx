@@ -47,6 +47,7 @@ export default function AdminOrgManagerPage() {
   // Modal State
   const [modalType, setModalType] = useState<'school' | 'faculty' | 'department' | null>(null)
   const [editingItem, setEditingItem] = useState<{ id?: string; name: string; parentId?: string } | null>(null)
+  const [bulkMode, setBulkMode] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
@@ -72,7 +73,7 @@ export default function AdminOrgManagerPage() {
     loadOrg()
   }, [loadOrg])
 
-  // Save (Create or Edit)
+  // Save (Create or Edit, supports bulk creation)
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!editingItem || !editingItem.name.trim()) return
@@ -81,36 +82,65 @@ export default function AdminOrgManagerPage() {
     setErrorMsg(null)
 
     try {
-      if (modalType === 'school') {
-        if (editingItem.id) {
-          const { error } = await supabase.from('schools').update({ name: editingItem.name.trim() }).eq('id', editingItem.id)
+      if (bulkMode && !editingItem.id) {
+        // Parse bulk names separated by newlines or commas
+        const rawNames = editingItem.name
+          .split(/[\r\n,]+/)
+          .map(s => s.trim())
+          .filter(Boolean)
+
+        const names = Array.from(new Set(rawNames))
+        if (names.length === 0) throw new Error('Please enter at least one name.')
+
+        if (modalType === 'school') {
+          const rows = names.map(n => ({ name: n }))
+          const { error } = await supabase.from('schools').insert(rows)
           if (error) throw error
-        } else {
-          const { error } = await supabase.from('schools').insert({ name: editingItem.name.trim() })
+        } else if (modalType === 'faculty') {
+          if (!editingItem.parentId) throw new Error('Please select a parent school.')
+          const rows = names.map(n => ({ name: n, school_id: editingItem.parentId }))
+          const { error } = await supabase.from('faculties').insert(rows)
+          if (error) throw error
+        } else if (modalType === 'department') {
+          if (!editingItem.parentId) throw new Error('Please select a parent faculty.')
+          const rows = names.map(n => ({ name: n, faculty_id: editingItem.parentId }))
+          const { error } = await supabase.from('departments').insert(rows)
           if (error) throw error
         }
-      } else if (modalType === 'faculty') {
-        if (!editingItem.parentId) throw new Error('Please select a parent school.')
-        if (editingItem.id) {
-          const { error } = await supabase.from('faculties').update({ name: editingItem.name.trim() }).eq('id', editingItem.id)
-          if (error) throw error
-        } else {
-          const { error } = await supabase.from('faculties').insert({ name: editingItem.name.trim(), school_id: editingItem.parentId })
-          if (error) throw error
-        }
-      } else if (modalType === 'department') {
-        if (!editingItem.parentId) throw new Error('Please select a parent faculty.')
-        if (editingItem.id) {
-          const { error } = await supabase.from('departments').update({ name: editingItem.name.trim() }).eq('id', editingItem.id)
-          if (error) throw error
-        } else {
-          const { error } = await supabase.from('departments').insert({ name: editingItem.name.trim(), faculty_id: editingItem.parentId })
-          if (error) throw error
+      } else {
+        // Single create or edit
+        if (modalType === 'school') {
+          if (editingItem.id) {
+            const { error } = await supabase.from('schools').update({ name: editingItem.name.trim() }).eq('id', editingItem.id)
+            if (error) throw error
+          } else {
+            const { error } = await supabase.from('schools').insert({ name: editingItem.name.trim() })
+            if (error) throw error
+          }
+        } else if (modalType === 'faculty') {
+          if (!editingItem.parentId) throw new Error('Please select a parent school.')
+          if (editingItem.id) {
+            const { error } = await supabase.from('faculties').update({ name: editingItem.name.trim() }).eq('id', editingItem.id)
+            if (error) throw error
+          } else {
+            const { error } = await supabase.from('faculties').insert({ name: editingItem.name.trim(), school_id: editingItem.parentId })
+            if (error) throw error
+          }
+        } else if (modalType === 'department') {
+          if (!editingItem.parentId) throw new Error('Please select a parent faculty.')
+          if (editingItem.id) {
+            const { error } = await supabase.from('departments').update({ name: editingItem.name.trim() }).eq('id', editingItem.id)
+            if (error) throw error
+          } else {
+            const { error } = await supabase.from('departments').insert({ name: editingItem.name.trim(), faculty_id: editingItem.parentId })
+            if (error) throw error
+          }
         }
       }
 
       setModalType(null)
       setEditingItem(null)
+      setBulkMode(false)
       await loadOrg()
     } catch (err: any) {
       console.error('Org save error:', err)
@@ -387,17 +417,69 @@ export default function AdminOrgManagerPage() {
                 </div>
               )}
 
-              <div className="flex flex-col gap-1">
-                <label className="font-bold text-text-primary">{modalType} Name *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder={`e.g. ${modalType === 'school' ? 'University of Lagos' : modalType === 'faculty' ? 'Faculty of Science' : 'Computer Science'}`}
-                  value={editingItem.name}
-                  onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-border-default bg-bg-secondary text-sm text-text-primary focus:outline-none focus:border-primary"
-                />
-              </div>
+              {/* Single vs Bulk Mode Toggle for new items */}
+              {!editingItem.id && (
+                <div className="flex rounded-xl bg-bg-secondary p-1 border border-border-default mb-1">
+                  <button
+                    type="button"
+                    onClick={() => setBulkMode(false)}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      !bulkMode ? 'bg-bg-primary text-primary shadow-sm border border-border-default' : 'text-text-tertiary hover:text-text-primary'
+                    }`}
+                  >
+                    Single {modalType}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBulkMode(true)}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      bulkMode ? 'bg-bg-primary text-primary shadow-sm border border-border-default' : 'text-text-tertiary hover:text-text-primary'
+                    }`}
+                  >
+                    Bulk Add (Multiple)
+                  </button>
+                </div>
+              )}
+
+              {bulkMode && !editingItem.id ? (
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="font-bold text-text-primary capitalize">{modalType} Names (Bulk) *</label>
+                    <span className="text-[10px] text-primary font-mono font-bold">
+                      {editingItem.name.split(/[\r\n,]+/).map(s => s.trim()).filter(Boolean).length} item(s) detected
+                    </span>
+                  </div>
+                  <textarea
+                    rows={6}
+                    required
+                    placeholder={
+                      modalType === 'faculty'
+                        ? "Enter or paste faculties (one per line or comma-separated):\nFaculty of Science\nFaculty of Engineering\nFaculty of Arts\nFaculty of Law"
+                        : modalType === 'department'
+                        ? "Enter or paste departments (one per line or comma-separated):\nComputer Science\nSoftware Engineering\nInformation Technology\nCybersecurity"
+                        : "Enter or paste school names (one per line or comma-separated)..."
+                    }
+                    value={editingItem.name}
+                    onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border-default bg-bg-secondary text-xs text-text-primary focus:outline-none focus:border-primary resize-y font-mono"
+                  />
+                  <p className="text-[10px] text-text-tertiary">
+                    Tip: Paste a list from Excel, Google Sheets, or a document. Duplicates will be filtered automatically.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  <label className="font-bold text-text-primary capitalize">{modalType} Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder={`e.g. ${modalType === 'school' ? 'University of Lagos' : modalType === 'faculty' ? 'Faculty of Science' : 'Computer Science'}`}
+                    value={editingItem.name}
+                    onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border-default bg-bg-secondary text-sm text-text-primary focus:outline-none focus:border-primary"
+                  />
+                </div>
+              )}
 
               {errorMsg && (
                 <div className="p-2.5 bg-error/10 border border-error/20 rounded-xl text-error font-medium">

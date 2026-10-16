@@ -24,6 +24,8 @@ import {
   UserMinus,
   UploadCloud,
   FileCheck,
+  Trash2,
+  AlertTriangle,
   X
 } from '@/components/ui/icons'
 
@@ -99,6 +101,27 @@ export default function LecturerClassDetailPage() {
   const [selectedReq, setSelectedReq] = useState<CorrectionReq | null>(null)
   const [replyText, setReplyText] = useState('')
   const [submittingReply, setSubmittingReply] = useState(false)
+
+  // Delete class modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deletingClass, setDeletingClass] = useState(false)
+
+  const handleDeleteClass = async () => {
+    setDeletingClass(true)
+    try {
+      const res = await fetch('/api/lecturer/delete-class', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ classKey }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to delete class')
+      router.push('/lecturer')
+    } catch (err: any) {
+      alert(err.message || 'Error deleting class')
+      setDeletingClass(false)
+    }
+  }
 
   const loadClassData = useCallback(async () => {
     try {
@@ -392,13 +415,23 @@ export default function LecturerClassDetailPage() {
           </p>
         </div>
 
-        <button
-          onClick={handleStartAnotherSession}
-          className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-primary hover:opacity-90 text-white font-bold text-xs shadow-lg shadow-primary/25 cursor-pointer transition-all"
-        >
-          <Play size={14} fill="currentColor" />
-          <span>Start New Session</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            title="Delete Class"
+            className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-bg-primary hover:bg-error/10 border border-border-default hover:border-error/30 text-text-secondary hover:text-error font-bold text-xs cursor-pointer transition-all"
+          >
+            <Trash2 size={15} />
+            <span className="hidden sm:inline">Delete Class</span>
+          </button>
+          <button
+            onClick={handleStartAnotherSession}
+            className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-primary hover:opacity-90 text-white font-bold text-xs shadow-lg shadow-primary/25 cursor-pointer transition-all"
+          >
+            <Play size={14} fill="currentColor" />
+            <span>Start New Session</span>
+          </button>
+        </div>
       </div>
 
       {/* Navigation Tabs (Section 7.4) */}
@@ -835,6 +868,59 @@ export default function LecturerClassDetailPage() {
                 className="flex-1 py-2.5 rounded-xl bg-success text-white font-bold text-xs hover:opacity-90"
               >
                 Approve &amp; Resolve
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Class Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-bg-primary border border-border-default rounded-3xl p-6 shadow-2xl flex flex-col gap-4 animate-scale-in">
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-2xl bg-error/10 text-error flex items-center justify-center">
+                <AlertTriangle size={20} />
+              </div>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="text-text-tertiary hover:text-text-primary p-1 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-bold text-text-primary">Permanently Delete Class?</h3>
+              <p className="text-xs text-text-secondary mt-1">
+                Are you sure you want to delete <strong className="text-text-primary">{courseTitle}</strong>? This will permanently remove all {sessions.length} session(s), attendance marks, and related inquiries. This action cannot be reversed.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-border-default">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deletingClass}
+                className="px-4 py-2.5 rounded-xl border border-border-default text-xs font-bold text-text-secondary hover:bg-bg-secondary cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteClass}
+                disabled={deletingClass}
+                className="px-5 py-2.5 rounded-xl bg-error hover:bg-error/90 text-white text-xs font-bold shadow-md shadow-error/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {deletingClass ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={14} />
+                    <span>Delete Permanently</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

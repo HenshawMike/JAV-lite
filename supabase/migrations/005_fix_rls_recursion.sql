@@ -90,3 +90,18 @@ DROP TRIGGER IF EXISTS trg_sync_attendance_ids ON public.attendance;
 CREATE TRIGGER trg_sync_attendance_ids
   BEFORE INSERT OR UPDATE ON public.attendance
   FOR EACH ROW EXECUTE FUNCTION public.sync_attendance_event_session_ids();
+
+-- 9. Allow lecturers and admins to delete their own created sessions/classes
+DROP POLICY IF EXISTS "Delete own session" ON public.sessions;
+CREATE POLICY "Delete own session" ON public.sessions FOR DELETE TO authenticated
+  USING (created_by = auth.uid() OR public.is_admin());
+
+-- 10. Support cancelled status for sessions/events
+DO $$ BEGIN
+  ALTER TYPE session_status ADD VALUE IF NOT EXISTS 'cancelled';
+EXCEPTION
+  WHEN duplicate_object THEN null;
+  WHEN undefined_object THEN null;
+END $$;
+
+

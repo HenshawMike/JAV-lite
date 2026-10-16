@@ -24,13 +24,17 @@ import {
   BookOpen
 } from '@/components/ui/icons'
 
+import { getCachedStudentData, setCachedStudentData } from '@/lib/studentCache'
+
 export default function ProfilePage() {
   const router = useRouter()
   const supabase = createClient()
 
-  const [loading, setLoading] = useState(true)
+  const [cachedProfile] = useState(() => getCachedStudentData<any>('profile'))
+
+  const [loading, setLoading] = useState(!cachedProfile)
   const [user, setUser] = useState<any>(null)
-  const [profile, setProfile] = useState<any>(null)
+  const [profile, setProfile] = useState<any>(cachedProfile)
   const [downloadingData, setDownloadingData] = useState(false)
 
   // Account deletion modal
@@ -56,6 +60,7 @@ export default function ProfilePage() {
           .single()
 
         setProfile(prof)
+        setCachedStudentData('profile', prof)
       } catch (err) {
         console.error('Error loading profile:', err)
       } finally {
@@ -120,8 +125,9 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] bg-bg-primary flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-bg-primary flex flex-col items-center justify-center pb-24">
         <Loader2 size={36} className="animate-spin text-primary" />
+        <BottomNav />
       </div>
     )
   }

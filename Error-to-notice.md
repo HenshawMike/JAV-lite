@@ -1,5 +1,6 @@
-1. the qr  code for events doesnt work : Object { code: "42703", details: null, hint: null, message: "column attendance.event_id does not exist" }
-2. error in  creating class 'INFINITE RECURSION DETECTED IN THE POLICY FOR 'SESSIONS'
-3. IN THE ADMIN SIDE OF THINGS THERE IS NO ROSTER OR LECTURER APPROVAL BUILD THE UI AND GIVE THE FUNTIONALITIES
-4. FOR THE STUDENT SECTION PLS DO  FIX THE NAVBAR THE QR CODE IS TO HIGH UP CENTER IT AND THEN I NEED YOU TO MAKE SURE THIS APP IS RESPONSIVE AND THE LANDING PAGE SHOW ALSO HAVE LINKS TO THE LEGALS I GAVE YO
-5. i want you to fix the navbar in the student section to be aligned
+1. there is no ui to export the list names when the session has ended or is cancelled for admin thats for events both csv and pdf make this funtionality for admin
+2. also make it possible for lectuers to  delete their created classes 
+3. aslo in thw org make it possible to add bulk, things likke faculties and department all at once to prevent the hard ship of  one by one  kind of things 
+4. the events in the admin side doesnt show the students that comes in  and it doesnt have the add student and reasons for adding 
+
+5. also the student section when navigating its takes time to load the next section i am navigating make it possible to swipe from left to right to make this faster
