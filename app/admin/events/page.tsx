@@ -1,5 +1,14 @@
 'use client'
 
+// ============================================================================
+// [v1 CODE - DEPRECATED IN v2.0]
+// In Version 1.0, admin events operated against the standalone 'events' table
+// with a single active event and manual attendance confirmation.
+// In Version 2.0, classes and events are unified in the 'sessions' table
+// (kind = 'event'), using rotating QR codes and automatic expiry.
+// Retained for backwards compatibility with v1 event data.
+// ============================================================================
+
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'

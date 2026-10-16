@@ -3,12 +3,28 @@
 import React, { useState, useRef } from 'react'
 import { Camera, UploadCloud, Zap, ShieldCheck, AlertCircle, CheckCircle2, Loader2, ScanFace } from '@/components/ui/icons'
 
-interface FaceCaptureProps {
-  onUpload: (url: string) => void
-  currentUrl: string | null
+// ============================================================================
+// [v1 CODE - DEPRECATED IN v2.2]
+// Per JAV Lite Build Document v2.0 (v2.2 update):
+// "There is no face capture anywhere in the sign-up or registration process.
+// The app collects no face photos, so the photo field, the Cloudinary
+// integration and the related consent, privacy and terms text have been removed."
+//
+// All code below is commented out as it is not necessary in Version 2.
+// The component stub and interface are retained for backwards compatibility.
+// ============================================================================
+
+export interface FaceCaptureProps {
+  onUpload?: (url: string) => void
+  currentUrl?: string | null
 }
 
-export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }) => {
+export const FaceCapture: React.FC<FaceCaptureProps> = () => {
+  return null
+}
+
+/*
+export const FaceCaptureV1: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
@@ -27,7 +43,6 @@ export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }
     // Check if file is over 5MB
     if (file.size > 5 * 1024 * 1024) {
       showToast('File size exceeds 5MB limit. Please choose a smaller photo.')
-      // Reset input
       if (fileInputRef.current) fileInputRef.current.value = ''
       return
     }
@@ -69,7 +84,7 @@ export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }
       ctx?.drawImage(img, 0, 0, width, height)
       const dataUrl = canvas.toDataURL('image/jpeg', 0.6)
 
-      onUpload(dataUrl)
+      onUpload && onUpload(dataUrl)
     } catch (err) {
       setError('Failed to process local image capture.')
     } finally {
@@ -129,7 +144,7 @@ export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }
           }
 
           if (result.event === 'success') {
-            onUpload(result.info.secure_url)
+            onUpload && onUpload(result.info.secure_url)
             setLoading(false)
           }
 
@@ -152,9 +167,7 @@ export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Frame Box */}
       <div className="relative w-full max-w-[280px] sm:max-w-[320px] md:max-w-full aspect-square mx-auto bg-bg-secondary border border-primary/20 rounded-2xl overflow-hidden flex flex-col items-center justify-center p-4 md:p-6 shadow-inner">
-        {/* Sleek hairline corner framing marks */}
         <div className="absolute top-4 left-4 w-5 h-5 border-t-2 border-l-2 border-primary/60 rounded-tl-sm pointer-events-none" />
         <div className="absolute top-4 right-4 w-5 h-5 border-t-2 border-r-2 border-primary/60 rounded-tr-sm pointer-events-none" />
         <div className="absolute bottom-4 left-4 w-5 h-5 border-b-2 border-l-2 border-primary/60 rounded-bl-sm pointer-events-none" />
@@ -174,7 +187,6 @@ export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }
           </>
         ) : (
           <div className="flex flex-col items-center justify-center text-center gap-3 select-none">
-            {/* Minimalist line icon indicator */}
             <div className="w-16 h-16 rounded-2xl border border-border-default bg-bg-tertiary flex items-center justify-center text-text-tertiary">
               <ScanFace size={30} strokeWidth={1.5} className="text-primary/70" />
             </div>
@@ -204,7 +216,6 @@ export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }
         </div>
       )}
 
-      {/* Capture Action Button */}
       <div className="flex flex-col gap-2.5">
         <button
           type="button"
@@ -235,7 +246,6 @@ export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }
           <span>{currentUrl ? 'Retake locally (Fallback)' : 'Capture locally (Fallback)'}</span>
         </button>
 
-        {/* Hidden file input for local fallback */}
         <input
           type="file"
           accept="image/*"
@@ -246,7 +256,6 @@ export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }
         />
       </div>
 
-      {/* Disclaimer Info */}
       <div className="flex gap-2.5 p-3 bg-bg-secondary/70 border border-border-default rounded-xl text-[10px] text-text-secondary leading-relaxed items-center">
         <ShieldCheck size={14} strokeWidth={2} className="text-primary flex-shrink-0" />
         <p>
@@ -254,7 +263,6 @@ export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }
         </p>
       </div>
 
-      {/* Floating Toast Notification */}
       {toast && (
         <div className="fixed bottom-6 right-6 z-[100] animate-fade-in flex items-center gap-3 bg-error text-white px-5 py-3 rounded-xl shadow-xl border border-white/10 max-w-[320px]">
           <AlertCircle size={18} strokeWidth={2} className="flex-shrink-0" />
@@ -264,3 +272,5 @@ export const FaceCapture: React.FC<FaceCaptureProps> = ({ onUpload, currentUrl }
     </div>
   )
 }
+*/
+

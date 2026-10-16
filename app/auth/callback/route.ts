@@ -13,7 +13,7 @@ export async function GET(request: Request) {
       // Sync/load the user's profile
       let { data: profile, error: profileErr } = await supabase
         .from('profiles')
-        .select('registered, is_admin')
+        .select('registered, is_admin, role')
         .eq('id', user.id)
         .single()
 
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
             full_name: user.user_metadata?.full_name || null,
             registered: false,
           })
-          .select('registered, is_admin')
+          .select('registered, is_admin, role')
           .single()
 
         if (!createErr && newProfile) {
@@ -35,15 +35,36 @@ export async function GET(request: Request) {
         }
       }
 
-      // Route users based on profile status
-      let redirectTo = '/register'
-      if (profile?.is_admin) {
-        redirectTo = '/admin'
-      } else if (profile?.registered) {
-        redirectTo = '/attend'
+      // Check admin status
+      if (profile?.is_admin || profile?.role === 'admin') {
+        return NextResponse.redirect(`${origin}/admin`)
       }
 
-      return NextResponse.redirect(`${origin}${redirectTo}`)
+      // Check if user has consented / completed role onboarding
+      const { data: consents } = await supabase
+        .from('consents')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1)
+
+      const hasOnboarded = Boolean((consents && consents.length > 0) || profile?.registered)
+
+      if (!hasOnboarded) {
+        // Users sign in with Google first, then choose between student and lecturer
+        return NextResponse.redirect(`${origin}/onboarding`)
+      }
+
+      // If user has already completed onboarding, route to their role dashboard
+      if (profile?.role === 'lecturer') {
+        return NextResponse.redirect(`${origin}/lecturer`)
+      }
+
+      const next = searchParams.get('next')
+      if (next && next.startsWith('/') && !next.startsWith('//')) {
+        return NextResponse.redirect(`${origin}${next}`)
+      }
+
+      return NextResponse.redirect(`${origin}/home`)
     }
   }
 

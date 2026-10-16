@@ -1,5 +1,20 @@
 'use client'
 
+// ============================================================================
+// [v1 CODE - DEPRECATED / SUPERSEDED IN v2.0]
+// In Version 1.0, RoleSelect was used on the landing page before Google OAuth sign-in.
+// In Version 2.0 (Build Document v2.0 Section 3), users authenticate via Google
+// first, and role selection with terms/privacy consent occurs on /onboarding.
+//
+// This component is commented out and superseded. A fallback stub is retained
+// for backwards compatibility.
+// ============================================================================
+
+export function RoleSelect() {
+  return null
+}
+
+/*
 import { useState } from 'react'
 import { GraduationCap, User, Check } from '@/components/ui/icons'
 import { SignInButton } from '@/components/SignInButton'
@@ -21,14 +36,11 @@ const ROLES: { id: Role; label: string; desc: string; icon: React.ReactNode }[] 
     },
 ]
 
-export function RoleSelect() {
+export function RoleSelectV1() {
     const [selected, setSelected] = useState<Role | null>(null)
 
     const handleSelect = (role: Role) => {
         setSelected(role)
-        // SignInButton kicks off the Google OAuth redirect, so the role
-        // needs to survive that round trip. Simplest option: stash it and
-        // read it back on the /register page once the user lands there.
         localStorage.setItem('jav_selected_role', role)
     }
 
@@ -79,3 +91,4 @@ export function RoleSelect() {
         </div>
     )
 }
+*/

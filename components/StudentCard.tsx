@@ -1,3 +1,12 @@
+// ============================================================================
+// [v1 CODE - DEPRECATED IN v2.0]
+// In Version 1.0, StudentCard was used for the flat-department student list.
+// In Version 2.0, admin student directory is rendered in app/admin/page.tsx
+// with hierarchical organization (School -> Faculty -> Department) and Section 8.1 editing.
+//
+// The 'Profile' interface is retained because existing components depend on it.
+// ============================================================================
+
 import React from 'react'
 import { Avatar } from './ui/Avatar'
 import { Badge } from './ui/Badge'
