@@ -16,7 +16,10 @@ import {
   Radio,
   Loader2,
   BookOpen,
-  MessageSquare
+  MessageSquare,
+  Trash2,
+  AlertTriangle,
+  X
 } from '@/components/ui/icons'
 
 interface ClassGroup {
@@ -39,6 +42,27 @@ export default function LecturerDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState<any>(null)
   const [classGroups, setClassGroups] = useState<ClassGroup[]>([])
+  const [deletingKey, setDeletingKey] = useState<string | null>(null)
+  const [confirmDeleteGroup, setConfirmDeleteGroup] = useState<ClassGroup | null>(null)
+
+  const handleDeleteClass = async (classKey: string) => {
+    setDeletingKey(classKey)
+    try {
+      const res = await fetch('/api/lecturer/delete-class', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ classKey }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to delete class')
+      setConfirmDeleteGroup(null)
+      await loadClasses()
+    } catch (err: any) {
+      alert(err.message || 'Error deleting class')
+    } finally {
+      setDeletingKey(null)
+    }
+  }
 
   const loadClasses = useCallback(async () => {
     try {
@@ -243,12 +267,74 @@ export default function LecturerDashboardPage() {
                       <ChevronRight size={14} />
                     </Link>
                   )}
+
+                  <button
+                    onClick={() => setConfirmDeleteGroup(grp)}
+                    title="Delete Class"
+                    aria-label="Delete Class"
+                    className="p-2.5 rounded-xl bg-bg-secondary hover:bg-error/10 text-text-tertiary hover:text-error border border-border-default hover:border-error/30 transition-all cursor-pointer"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         )}
       </section>
+
+      {/* Delete Confirmation Modal */}
+      {confirmDeleteGroup && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-bg-primary border border-border-default rounded-3xl p-6 shadow-2xl flex flex-col gap-4 animate-scale-in">
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-2xl bg-error/10 text-error flex items-center justify-center">
+                <AlertTriangle size={20} />
+              </div>
+              <button
+                onClick={() => setConfirmDeleteGroup(null)}
+                className="text-text-tertiary hover:text-text-primary p-1 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-bold text-text-primary">Delete Class?</h3>
+              <p className="text-xs text-text-secondary mt-1">
+                Are you sure you want to permanently delete <strong className="text-text-primary">{confirmDeleteGroup.name}</strong> ({confirmDeleteGroup.key})? This will delete all {confirmDeleteGroup.total_sessions} session(s) and recorded attendance marks. This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-border-default">
+              <button
+                onClick={() => setConfirmDeleteGroup(null)}
+                disabled={deletingKey === confirmDeleteGroup.key}
+                className="px-4 py-2.5 rounded-xl border border-border-default text-xs font-bold text-text-secondary hover:bg-bg-secondary cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteClass(confirmDeleteGroup.key)}
+                disabled={deletingKey === confirmDeleteGroup.key}
+                className="px-5 py-2.5 rounded-xl bg-error hover:bg-error/90 text-white text-xs font-bold shadow-md shadow-error/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {deletingKey === confirmDeleteGroup.key ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={14} />
+                    <span>Delete Class</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Floating Action Button for Mobile / Desktop (Section 7.1) */}
       <Link

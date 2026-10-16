@@ -41,13 +41,17 @@ interface Department {
   name: string
 }
 
+import { getCachedStudentData, setCachedStudentData } from '@/lib/studentCache'
+
 export default function ScanPage() {
   const router = useRouter()
   const supabase = createClient()
 
-  const [loadingUser, setLoadingUser] = useState(true)
+  const [cachedProfile] = useState(() => getCachedStudentData<any>('profile'))
+
+  const [loadingUser, setLoadingUser] = useState(!cachedProfile)
   const [user, setUser] = useState<any>(null)
-  const [profile, setProfile] = useState<any>(null)
+  const [profile, setProfile] = useState<any>(cachedProfile)
 
   // Scanning state
   const [scanStep, setScanStep] = useState<'scanning' | 'registering' | 'confirming' | 'success' | 'error'>('scanning')
@@ -94,6 +98,7 @@ export default function ScanPage() {
           .single()
 
         setProfile(prof)
+        setCachedStudentData('profile', prof)
         if (prof?.full_name) {
           setFormData(f => ({ ...f, fullName: prof.full_name }))
         } else if (authUser.user_metadata?.full_name) {
@@ -293,8 +298,9 @@ export default function ScanPage() {
 
   if (loadingUser) {
     return (
-      <div className="min-h-[100dvh] bg-bg-primary flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-bg-primary flex flex-col items-center justify-center pb-24">
         <Loader2 size={36} className="animate-spin text-primary" />
+        <BottomNav />
       </div>
     )
   }

@@ -53,14 +53,19 @@ interface CorrectionRequest {
   }
 }
 
+import { getCachedStudentData, setCachedStudentData } from '@/lib/studentCache'
+
 export default function MyRecordsPage() {
   const router = useRouter()
   const supabase = createClient()
 
-  const [loading, setLoading] = useState(true)
+  const [cachedProfile] = useState(() => getCachedStudentData<any>('profile'))
+  const [cachedRecords] = useState(() => getCachedStudentData<MyRecord[]>('records'))
+
+  const [loading, setLoading] = useState(!cachedRecords)
   const [user, setUser] = useState<any>(null)
-  const [profile, setProfile] = useState<any>(null)
-  const [records, setRecords] = useState<MyRecord[]>([])
+  const [profile, setProfile] = useState<any>(cachedProfile)
+  const [records, setRecords] = useState<MyRecord[]>(cachedRecords || [])
   const [requests, setRequests] = useState<CorrectionRequest[]>([])
 
   // Modal for Reporting a Problem
@@ -113,7 +118,9 @@ export default function MyRecordsPage() {
         .select('*')
         .order('marked_at', { ascending: false })
 
-      setRecords((recs as MyRecord[]) || [])
+      const list = (recs as MyRecord[]) || []
+      setRecords(list)
+      setCachedStudentData('records', list)
 
       // 2. Fetch correction requests
       const { data: reqs } = await supabase
@@ -188,11 +195,12 @@ export default function MyRecordsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] bg-bg-primary flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-bg-primary flex flex-col items-center justify-center pb-24">
         <div className="flex flex-col items-center gap-4">
           <Loader2 size={36} className="animate-spin text-primary" />
           <p className="text-xs font-bold uppercase tracking-widest text-text-secondary">Loading official records...</p>
         </div>
+        <BottomNav />
       </div>
     )
   }

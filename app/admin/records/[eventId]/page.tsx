@@ -29,7 +29,8 @@ import {
   Clock, 
   TrendingUp, 
   UserX, 
-  Loader2 
+  Loader2,
+  FileText
 } from '@/components/ui/icons'
 
 interface Event {
@@ -376,11 +377,20 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
               onClick={handleExportCSV}
               variant="primary"
               loading={exporting}
-              className="py-2.5 px-5 text-xs font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 flex items-center gap-2"
+              className="py-2.5 px-4 text-xs font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 flex items-center gap-2"
             >
               <Download size={14} strokeWidth={2} />
               Export CSV
             </Button>
+            <a
+              href={`/api/reports/event/${event.id}/pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="py-2.5 px-4 text-xs font-bold rounded-xl border border-border-default bg-bg-secondary hover:bg-bg-tertiary text-text-primary transition-all flex items-center gap-2"
+            >
+              <FileText size={14} strokeWidth={2} />
+              Export PDF
+            </a>
           </div>
         </div>
       </div>
