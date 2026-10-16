@@ -75,14 +75,31 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
 
   const fetchData = async () => {
     try {
-      // 1. Fetch target event
-      const { data: ev, error: evErr } = await supabase
-        .from('events')
+      // 1. Fetch target event from sessions (v2) or events (v1)
+      let ev = null
+      const { data: sessionData } = await supabase
+        .from('sessions')
         .select('*')
         .eq('id', eventId)
-        .single()
-      
-      if (evErr) throw evErr
+        .maybeSingle()
+
+      if (sessionData) {
+        ev = {
+          id: sessionData.id,
+          name: sessionData.name,
+          date: sessionData.session_date,
+          active: sessionData.status === 'open',
+          created_at: sessionData.started_at,
+          ...sessionData
+        }
+      } else {
+        const { data: eventData } = await supabase
+          .from('events')
+          .select('*')
+          .eq('id', eventId)
+          .maybeSingle()
+        ev = eventData
+      }
       setEvent(ev)
 
       // 2. Fetch registered students
@@ -95,14 +112,31 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
       if (stdsErr) throw stdsErr
       setStudents(stds || [])
 
-      // 3. Fetch attendance records
-      const { data: atts, error: attsErr } = await supabase
+      // 3. Fetch attendance records (try session_id first, fallback to event_id)
+      let atts: AttendanceRecord[] = []
+      const { data: sessionAtts, error: sessionAttsErr } = await supabase
         .from('attendance')
-        .select('student_id, marked_at, status')
-        .eq('event_id', eventId)
+        .select('*')
+        .eq('session_id', eventId)
 
-      if (attsErr) throw attsErr
-      setAttendance(atts || [])
+      if (!sessionAttsErr && sessionAtts) {
+        atts = sessionAtts.map(a => ({
+          student_id: a.student_id,
+          marked_at: a.marked_at,
+          status: a.status || 'confirmed'
+        }))
+      } else {
+        const { data: eventAtts } = await supabase
+          .from('attendance')
+          .select('student_id, marked_at, status')
+          .eq('event_id', eventId)
+        atts = (eventAtts || []).map(a => ({
+          student_id: a.student_id,
+          marked_at: a.marked_at,
+          status: a.status || 'confirmed'
+        }))
+      }
+      setAttendance(atts)
     } catch (err) {
       console.error(err)
       router.push('/admin/events')
@@ -129,12 +163,24 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('You must be logged in to confirm attendance.')
 
-      const { data, error } = await supabase
+      // Try session_id first, fallback to event_id
+      let { data, error } = await supabase
         .from('attendance')
         .update({ status: 'confirmed' })
-        .eq('event_id', eventId)
+        .eq('session_id', eventId)
         .in('student_id', pendingIds)
         .select()
+
+      if (error && (error.code === '42703' || error.message?.includes('session_id'))) {
+        const fallback = await supabase
+          .from('attendance')
+          .update({ status: 'confirmed' })
+          .eq('event_id', eventId)
+          .in('student_id', pendingIds)
+          .select()
+        data = fallback.data
+        error = fallback.error
+      }
 
       if (error) throw error
 
@@ -157,12 +203,24 @@ export default function AttendanceRecordsPage({ params }: RecordsPageProps) {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('You must be logged in to confirm attendance.')
 
-      const { data, error } = await supabase
+      // Try session_id first, fallback to event_id
+      let { data, error } = await supabase
         .from('attendance')
         .update({ status: 'confirmed' })
-        .eq('event_id', eventId)
+        .eq('session_id', eventId)
         .eq('student_id', studentId)
         .select()
+
+      if (error && (error.code === '42703' || error.message?.includes('session_id'))) {
+        const fallback = await supabase
+          .from('attendance')
+          .update({ status: 'confirmed' })
+          .eq('event_id', eventId)
+          .eq('student_id', studentId)
+          .select()
+        data = fallback.data
+        error = fallback.error
+      }
 
       if (error) throw error
 

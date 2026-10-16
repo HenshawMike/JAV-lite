@@ -1,129 +1,166 @@
 'use client'
 
 // ============================================================================
-// [v1 CODE - DEPRECATED IN v2.0]
-// In Version 1.0, admin events operated against the standalone 'events' table
-// with a single active event and manual attendance confirmation.
-// In Version 2.0, classes and events are unified in the 'sessions' table
-// (kind = 'event'), using rotating QR codes and automatic expiry.
-// Retained for backwards compatibility with v1 event data.
+// Admin Events & QR — v2.0
+// Uses the unified 'sessions' table (kind = 'event') with rotating QR codes.
 // ============================================================================
 
-import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import React, { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Input } from '@/components/ui/Input'
-import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
-import { 
-  Radio, 
-  FileText, 
-  Play, 
-  Trash2, 
-  CalendarX, 
-  CalendarPlus, 
-  AlertCircle, 
-  Loader2 
+import { QrDisplay } from '@/components/QrDisplay'
+import {
+  Radio,
+  CalendarX,
+  CalendarPlus,
+  AlertCircle,
+  Loader2,
+  QrCode,
+  CheckCircle2,
+  Clock,
+  Users,
+  X,
+  ChevronDown,
+  ChevronUp,
 } from '@/components/ui/icons'
 
-interface Event {
+interface EventSession {
   id: string
   name: string
   description: string | null
-  date: string
-  is_active: boolean
-  created_at: string
+  host_name: string
+  school_name: string
+  session_date: string
+  status: 'open' | 'ended'
+  started_at: string
+  expires_at: string
+  ended_at: string | null
   attendance_count?: number
 }
 
+interface School {
+  id: string
+  name: string
+}
+
 export default function AdminEventsPage() {
-  const router = useRouter()
   const supabase = createClient()
 
-  const [events, setEvents] = useState<Event[]>([])
+  const [events, setEvents] = useState<EventSession[]>([])
+  const [schools, setSchools] = useState<School[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeQrSessionId, setActiveQrSessionId] = useState<string | null>(null)
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null)
 
-  // Create event form state
+  // Create form state
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [date, setDate] = useState('')
+  const [hostName, setHostName] = useState('')
+  const [schoolId, setSchoolId] = useState('')
+  const [sessionDate, setSessionDate] = useState(new Date().toISOString().split('T')[0])
+  const [durationHrs, setDurationHrs] = useState('2')
   const [creating, setCreating] = useState(false)
   const [formErr, setFormErr] = useState<string | null>(null)
 
-  // Actions loading states
-  const [actioningId, setActioningId] = useState<string | null>(null)
+  // Ending state
+  const [endingId, setEndingId] = useState<string | null>(null)
 
-  // Fetch events list and count attendance rows
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
-      // Fetch events
-      const { data: evs, error: evsErr } = await supabase
-        .from('events')
+      const { data: sessionsData, error: sessErr } = await supabase
+        .from('sessions')
         .select('*')
-        .order('date', { ascending: false })
-      
-      if (evsErr) throw evsErr
+        .eq('kind', 'event')
+        .order('started_at', { ascending: false })
 
-      // Fetch attendance counts (all statuses; filter to confirmed in JS)
-      const { data: atts, error: attsErr } = await supabase
+      if (sessErr) throw sessErr
+
+      // Fetch attendance counts
+      const { data: attData } = await supabase
         .from('attendance')
-        .select('event_id, status')
-      
-      if (attsErr) throw attsErr
+        .select('session_id')
 
-      const counts = (atts || []).reduce((acc, a) => {
-        if (a.status === 'confirmed') {
-          acc[a.event_id] = (acc[a.event_id] || 0) + 1
-        }
+      const countMap = (attData || []).reduce((acc: Record<string, number>, row: any) => {
+        acc[row.session_id] = (acc[row.session_id] || 0) + 1
         return acc
-      }, {} as Record<string, number>)
+      }, {})
 
-      const enrichedEvents = (evs || []).map(e => ({
-        ...e,
-        attendance_count: counts[e.id] || 0
+      const enriched = (sessionsData || []).map((s: any) => ({
+        ...s,
+        attendance_count: countMap[s.id] || 0,
       }))
 
-      setEvents(enrichedEvents)
+      setEvents(enriched)
     } catch (err) {
-      console.error(err)
+      console.error('Fetch events error:', err)
     } finally {
       setLoading(false)
     }
-  }
+  }, [supabase])
 
   useEffect(() => {
-    fetchEvents()
-  }, [])
+    async function init() {
+      const { data: schoolsList } = await supabase.from('schools').select('id, name').order('name')
+      setSchools(schoolsList || [])
+
+      // Pre-fill host name from admin profile
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: prof } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+        if (prof?.full_name) setHostName(prof.full_name)
+      }
+
+      await fetchEvents()
+    }
+    init()
+  }, [fetchEvents, supabase])
 
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault()
     setFormErr(null)
-    
-    if (!name.trim() || !date) {
-      setFormErr('Name and Date are required.')
-      return
-    }
+
+    if (!name.trim()) { setFormErr('Event name is required.'); return }
+    if (!hostName.trim()) { setFormErr('Host name is required.'); return }
 
     setCreating(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
-      const { error } = await supabase
-        .from('events')
-        .insert({
-          name: name.trim(),
-          description: description.trim() || null,
-          date,
-          is_active: false, // Create as inactive by default
-          created_by: user.id
-        })
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('school_id, schools(name)')
+        .eq('id', user.id)
+        .single()
+
+      const chosenSchoolId = schoolId || (prof as any)?.school_id || null
+      const schoolRes = chosenSchoolId
+        ? await supabase.from('schools').select('name').eq('id', chosenSchoolId).single()
+        : null
+      const resolvedSchoolName = (schoolRes?.data as any)?.name || 'JAV Institution'
+
+      const expiresAt = new Date(Date.now() + parseFloat(durationHrs) * 60 * 60 * 1000).toISOString()
+
+      const { error } = await supabase.from('sessions').insert({
+        kind: 'event',
+        name: name.trim(),
+        description: description.trim() || null,
+        host_name: hostName.trim(),
+        school_id: chosenSchoolId,
+        school_name: resolvedSchoolName,
+        created_by: user.id,
+        status: 'open',
+        rotating: true,
+        session_date: sessionDate,
+        started_at: new Date().toISOString(),
+        expires_at: expiresAt,
+      })
 
       if (error) throw error
 
       setName('')
       setDescription('')
-      setDate('')
+      setSessionDate(new Date().toISOString().split('T')[0])
+      setDurationHrs('2')
       await fetchEvents()
     } catch (err: any) {
       setFormErr(err.message || 'Failed to create event.')
@@ -132,274 +169,322 @@ export default function AdminEventsPage() {
     }
   }
 
-  const handleActivateEvent = async (eventId: string) => {
-    setActioningId(eventId)
-    try {
-      // 1. Deactivate all events
-      const { error: deacErr } = await supabase
-        .from('events')
-        .update({ is_active: false })
-        .neq('id', eventId) // Set all other events to active = false
-
-      if (deacErr) throw deacErr
-
-      // 2. Activate target event
-      const { error: acErr } = await supabase
-        .from('events')
-        .update({ is_active: true })
-        .eq('id', eventId)
-
-      if (acErr) throw acErr
-
-      await fetchEvents()
-    } catch (err) {
-      console.error('Activation failed:', err)
-    } finally {
-      setActioningId(null)
-    }
-  }
-
-  const handleCloseEvent = async (eventId: string) => {
-    setActioningId(eventId)
+  const handleEndEvent = async (eventId: string) => {
+    if (!confirm('End this event? Students will no longer be able to scan in.')) return
+    setEndingId(eventId)
     try {
       const { error } = await supabase
-        .from('events')
-        .update({ is_active: false })
+        .from('sessions')
+        .update({ status: 'ended', ended_at: new Date().toISOString() })
         .eq('id', eventId)
 
       if (error) throw error
+      if (activeQrSessionId === eventId) setActiveQrSessionId(null)
       await fetchEvents()
     } catch (err) {
-      console.error(err)
+      console.error('End event error:', err)
     } finally {
-      setActioningId(null)
-    }
-  }
-
-  const handleDeleteEvent = async (eventId: string) => {
-    if (!confirm('Are you sure you want to delete this event? This will permanently delete all attendance records for it.')) return
-    setActioningId(eventId)
-    try {
-      const { error } = await supabase
-        .from('events')
-        .delete()
-        .eq('id', eventId)
-
-      if (error) throw error
-      await fetchEvents()
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setActioningId(null)
+      setEndingId(null)
     }
   }
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 gap-5 animate-pulse">
-        <Loader2 size={36} strokeWidth={2} className="text-primary" />
-        <span className="text-text-secondary font-bold tracking-[3px] uppercase text-xs">Synchronizing Calendar...</span>
+      <div className="flex flex-col items-center justify-center py-32 gap-5">
+        <Loader2 size={36} className="text-primary animate-spin" />
+        <span className="text-text-secondary font-bold tracking-[3px] uppercase text-xs">Loading Events...</span>
       </div>
     )
   }
 
-  const activeEvent = events.find(e => e.is_active)
-  const previousEvents = events.filter(e => !e.is_active)
+  const openEvents = events.filter(e => e.status === 'open')
+  const pastEvents = events.filter(e => e.status === 'ended')
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-fade-in relative z-10">
-      
-      {/* Column 1 & 2: Events Management Lists */}
-      <div className="lg:col-span-8 flex flex-col gap-10">
-        <div className="max-w-2xl border-b border-border-default pb-6">
-          <h1 className="text-3xl font-bold text-text-primary mb-2" style={{ fontFamily: "var(--font-rajdhani)" }}>
-            Classes & Hangouts
-          </h1>
-          <p className="text-sm text-text-secondary leading-relaxed">
-            Start up a class, get people checked in, and see who decided to show up today.
-          </p>
-        </div>
+    <div className="flex flex-col gap-8 animate-fade-in">
 
-        {/* Active Session Card */}
-        <section className="flex flex-col gap-4">
-          <h2 className="text-[10px] text-text-tertiary font-bold tracking-[3px] uppercase">
-            Live Right Now!
-          </h2>
-          {activeEvent ? (
-            <div className="card-minimal p-6 sm:p-8 shadow-md border-t-4 border-t-success bg-gradient-to-br from-bg-primary to-success/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 relative overflow-hidden">
-              <div className="absolute -right-10 -top-10 w-32 h-32 bg-success/10 blur-3xl rounded-full pointer-events-none" />
-              
-              <div className="min-w-0 w-full sm:w-auto relative z-10">
-                <div className="flex items-center gap-3 mb-3">
-                  <Badge text="Broadcasting" type="success" />
-                  <span className="text-[11px] font-mono text-text-secondary font-bold bg-bg-secondary px-2 py-0.5 rounded border border-border-default">
-                    {new Date(activeEvent.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                  </span>
-                </div>
-                <h3 className="text-2xl font-bold text-text-primary truncate mb-1" style={{ fontFamily: "var(--font-rajdhani)" }}>
-                  {activeEvent.name}
-                </h3>
-                {activeEvent.description && (
-                  <p className="text-sm text-text-secondary truncate max-w-[400px]">
-                    {activeEvent.description}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex items-center gap-3 w-full sm:w-auto flex-shrink-0 relative z-10">
-                <Button 
-                  onClick={() => router.push(`/admin/records/${activeEvent.id}`)}
-                  variant="secondary"
-                  className="py-3 px-5 text-xs font-bold border-border-default bg-bg-secondary hover:border-primary flex-1 sm:flex-none justify-center gap-2"
-                >
-                  <FileText size={14} strokeWidth={2} />
-                  <span className="text-primary font-mono bg-primary/10 px-1.5 py-0.5 rounded">{activeEvent.attendance_count}</span>
-                  Logs
-                </Button>
-                <Button
-                  onClick={() => handleCloseEvent(activeEvent.id)}
-                  loading={actioningId === activeEvent.id}
-                  className="py-3 px-5 text-xs font-bold bg-text-primary text-bg-primary hover:bg-info flex-1 sm:flex-none justify-center"
-                >
-                  End it
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="card-minimal p-10 text-center flex flex-col gap-3 shadow-none border-dashed bg-transparent items-center">
-               <Radio size={36} strokeWidth={1.5} className="text-text-tertiary opacity-40 mb-1" />
-               <h3 className="text-base font-bold text-text-primary">System Idle</h3>
-               <p className="text-xs text-text-secondary max-w-[300px]">No active session currently broadcasting. Terminals are in standby.</p>
-            </div>
-          )}
-        </section>
-
-        {/* Previous Sessions list */}
-        <section className="flex flex-col gap-4">
-          <div className="flex items-center gap-3">
-            <h2 className="text-[10px] text-text-tertiary font-bold tracking-[3px] uppercase">
-              Archived Sessions
-            </h2>
-            <span className="text-[10px] bg-bg-secondary border border-border-default px-2 py-0.5 rounded-full font-mono text-text-secondary font-bold">
-              {previousEvents.length}
-            </span>
-          </div>
-
-          {previousEvents.length === 0 ? (
-            <div className="card-minimal p-8 text-center text-xs text-text-secondary shadow-none border-dashed bg-transparent">
-              No previous events recorded.
-            </div>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {previousEvents.map(ev => (
-                <div 
-                  key={ev.id}
-                  className="card-minimal p-5 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-primary/40 transition-colors shadow-sm group"
-                >
-                  <div className="min-w-0 w-full sm:w-auto">
-                    <div className="flex items-center gap-2 mb-2">
-                       <span className="text-[10px] font-mono text-text-secondary bg-bg-tertiary px-2 py-1 rounded border border-border-default font-bold">
-                        {new Date(ev.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                      </span>
-                    </div>
-                    <h4 className="text-lg font-bold text-text-primary truncate" style={{ fontFamily: "var(--font-rajdhani)" }}>
-                      {ev.name}
-                    </h4>
-                  </div>
-
-                  <div className="flex items-center gap-2 w-full sm:w-auto flex-shrink-0 grid grid-cols-3 sm:flex">
-                    <Button 
-                      onClick={() => router.push(`/admin/records/${ev.id}`)}
-                      variant="secondary"
-                      className="py-2.5 px-0 sm:px-4 text-xs font-bold w-full sm:w-auto flex items-center justify-center gap-1.5"
-                    >
-                      <FileText size={13} strokeWidth={2} />
-                      <span>Logs</span>
-                      <span className="text-primary font-mono ml-0.5">{ev.attendance_count}</span>
-                    </Button>
-                    <Button
-                      onClick={() => handleActivateEvent(ev.id)}
-                      variant="secondary"
-                      loading={actioningId === ev.id}
-                      className="py-2.5 px-0 sm:px-4 text-xs font-bold w-full sm:w-auto hover:text-success hover:border-success/40 flex items-center justify-center gap-1.5"
-                    >
-                      <Play size={13} strokeWidth={2} />
-                      <span>Boot</span>
-                    </Button>
-                    <Button
-                      onClick={() => handleDeleteEvent(ev.id)}
-                      variant="secondary"
-                      loading={actioningId === ev.id}
-                      className="py-2.5 px-0 sm:px-4 text-xs font-bold w-full sm:w-auto hover:bg-error hover:text-white hover:border-error flex items-center justify-center gap-1.5"
-                    >
-                      <Trash2 size={13} strokeWidth={2} />
-                      <span>Drop</span>
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+      {/* Header */}
+      <div className="border-b border-border-default pb-6">
+        <span className="text-[10px] font-bold tracking-[3px] uppercase text-primary">Event Management</span>
+        <h1 className="text-3xl font-bold text-text-primary mt-1" style={{ fontFamily: 'var(--font-rajdhani)' }}>
+          Events & QR Codes
+        </h1>
+        <p className="text-sm text-text-secondary mt-1">
+          Create events with rotating QR codes. Students scan to mark attendance in real time.
+        </p>
       </div>
 
-      {/* Column 3: Create Session Form */}
-      <div className="lg:col-span-4 flex flex-col gap-4 sticky top-24">
-        <h2 className="text-[10px] text-text-tertiary font-bold tracking-[3px] uppercase">
-          New Event
-        </h2>
-        <form onSubmit={handleCreateEvent} className="card-minimal p-6 sm:p-8 flex flex-col gap-6 shadow-md border-t-4 border-t-primary bg-bg-secondary">
-          <div className="mb-2 flex items-center justify-between">
-            <div>
-              <h3 className="text-xl font-bold text-text-primary" style={{ fontFamily: "var(--font-rajdhani)" }}>Plan a Hangout</h3>
-              <p className="text-xs text-text-secondary mt-1">Get the squad together.</p>
-            </div>
-            <div className="p-2.5 rounded-xl bg-bg-tertiary border border-border-default text-primary">
-              <CalendarPlus size={20} strokeWidth={1.75} />
-            </div>
-          </div>
-          
-          <div className="flex flex-col gap-5">
-            <Input 
-              label="Identifier *"
-              placeholder="e.g. Technical Seminar 1"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-            <Input 
-              label="Parameters"
-              placeholder="Brief details or agenda..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-            <Input 
-              label="Timestamp Date *"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="font-mono text-sm uppercase"
-              required
-            />
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-          {formErr && (
-            <div className="bg-error/10 border border-error/30 rounded-xl p-3.5 text-sm text-error font-semibold flex items-center gap-2.5">
-              <AlertCircle size={16} strokeWidth={2} className="flex-shrink-0" />
-              <span>{formErr}</span>
+        {/* Left: Event List */}
+        <div className="lg:col-span-8 flex flex-col gap-8">
+
+          {/* Live Events */}
+          <section className="flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+              <h2 className="text-[10px] font-bold tracking-[3px] uppercase text-text-tertiary">Live Events</h2>
+              <span className="text-[10px] bg-success/10 border border-success/20 text-success px-2 py-0.5 rounded-full font-mono font-bold">
+                {openEvents.length} active
+              </span>
             </div>
+
+            {openEvents.length === 0 ? (
+              <div className="p-10 rounded-2xl border border-dashed border-border-default text-center flex flex-col items-center gap-2 text-text-tertiary">
+                <Radio size={32} strokeWidth={1.5} className="opacity-40" />
+                <p className="text-sm font-bold text-text-primary">No live events</p>
+                <p className="text-xs">Create an event using the form to get started.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {openEvents.map(ev => (
+                  <div key={ev.id} className="rounded-2xl border border-success/30 bg-success/5 overflow-hidden">
+                    <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[10px] font-bold text-success bg-success/10 px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse" />
+                            Broadcasting
+                          </span>
+                          <span className="text-[10px] text-text-tertiary font-mono">
+                            {new Date(ev.session_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                          </span>
+                        </div>
+                        <h3 className="text-lg font-bold text-text-primary truncate" style={{ fontFamily: 'var(--font-rajdhani)' }}>
+                          {ev.name}
+                        </h3>
+                        <div className="flex items-center gap-3 text-[11px] text-text-tertiary mt-1">
+                          <span className="flex items-center gap-1">
+                            <Users size={11} />
+                            {ev.attendance_count} checked in
+                          </span>
+                          <span>·</span>
+                          <span className="flex items-center gap-1">
+                            <Clock size={11} />
+                            Expires {new Date(ev.expires_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => setActiveQrSessionId(activeQrSessionId === ev.id ? null : ev.id)}
+                          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-xs font-bold hover:opacity-90 shadow-md shadow-primary/20 transition-all cursor-pointer"
+                        >
+                          <QrCode size={14} />
+                          {activeQrSessionId === ev.id ? 'Hide QR' : 'Show QR'}
+                        </button>
+                        <button
+                          onClick={() => handleEndEvent(ev.id)}
+                          disabled={endingId === ev.id}
+                          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-bg-secondary border border-border-default text-xs font-bold text-text-secondary hover:border-error hover:text-error transition-all cursor-pointer disabled:opacity-50"
+                        >
+                          {endingId === ev.id ? <Loader2 size={13} className="animate-spin" /> : <CalendarX size={13} />}
+                          End Event
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* QR Display Panel */}
+                    {activeQrSessionId === ev.id && (
+                      <div className="border-t border-success/20 bg-bg-primary p-6 flex flex-col items-center gap-4 animate-fade-in">
+                        <p className="text-xs text-text-secondary text-center max-w-xs">
+                          Display this rotating QR on screen. It refreshes every 30 seconds to prevent sharing.
+                        </p>
+                        <div className="w-full max-w-xs">
+                          <QrDisplay
+                            sessionId={ev.id}
+                            hostName={ev.host_name}
+                            sessionName={ev.name}
+                            schoolName={ev.school_name}
+                            expiresAt={ev.expires_at}
+                            onEndSession={async () => { await handleEndEvent(ev.id) }}
+                          />
+                        </div>
+                        <button
+                          onClick={() => setActiveQrSessionId(null)}
+                          className="flex items-center gap-1 text-xs text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
+                        >
+                          <X size={12} /> Close QR
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Past Events */}
+          {pastEvents.length > 0 && (
+            <section className="flex flex-col gap-4">
+              <h2 className="text-[10px] font-bold tracking-[3px] uppercase text-text-tertiary flex items-center gap-2">
+                Past Events
+                <span className="text-[10px] bg-bg-secondary border border-border-default text-text-tertiary px-2 py-0.5 rounded-full font-mono font-bold">
+                  {pastEvents.length}
+                </span>
+              </h2>
+
+              <div className="flex flex-col gap-2">
+                {pastEvents.map(ev => (
+                  <div key={ev.id} className="rounded-2xl border border-border-default bg-bg-secondary overflow-hidden">
+                    <button
+                      onClick={() => setExpandedEventId(expandedEventId === ev.id ? null : ev.id)}
+                      className="w-full p-4 flex items-center justify-between gap-3 hover:bg-bg-tertiary/50 transition-colors cursor-pointer text-left"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-bold text-text-primary truncate" style={{ fontFamily: 'var(--font-rajdhani)' }}>
+                          {ev.name}
+                        </h4>
+                        <div className="flex items-center gap-3 text-[10px] text-text-tertiary mt-0.5">
+                          <span>{new Date(ev.session_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                          <span>·</span>
+                          <span className="flex items-center gap-1"><Users size={10} /> {ev.attendance_count} attended</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-bg-tertiary border border-border-default text-text-tertiary font-bold uppercase">Ended</span>
+                        {expandedEventId === ev.id ? <ChevronUp size={14} className="text-text-tertiary" /> : <ChevronDown size={14} className="text-text-tertiary" />}
+                      </div>
+                    </button>
+
+                    {expandedEventId === ev.id && (
+                      <div className="border-t border-border-default p-4 flex flex-col gap-2 text-xs animate-fade-in">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <span className="text-[10px] text-text-tertiary block">Host</span>
+                            <span className="font-bold text-text-primary">{ev.host_name}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-text-tertiary block">School</span>
+                            <span className="font-bold text-text-primary">{ev.school_name}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-text-tertiary block">Started</span>
+                            <span className="font-mono text-text-primary">{new Date(ev.started_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-text-tertiary block">Ended</span>
+                            <span className="font-mono text-text-primary">{ev.ended_at ? new Date(ev.ended_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '—'}</span>
+                          </div>
+                        </div>
+                        {ev.description && (
+                          <p className="text-text-secondary pt-1 border-t border-border-default/60">{ev.description}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
           )}
+        </div>
 
-          <Button 
-            type="submit"
-            variant="primary"
-            loading={creating}
-            disabled={!name || !date}
-            className="w-full py-4 text-sm mt-2 shadow-lg"
-          >
-            Kick it off!
-          </Button>
-        </form>
+        {/* Right: Create Form */}
+        <div className="lg:col-span-4 flex flex-col gap-4 sticky top-24">
+          <h2 className="text-[10px] font-bold tracking-[3px] uppercase text-text-tertiary">New Event</h2>
+          <form onSubmit={handleCreateEvent} className="p-6 rounded-2xl bg-bg-secondary border border-border-default border-t-4 border-t-primary shadow-md flex flex-col gap-5">
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="text-lg font-bold text-text-primary" style={{ fontFamily: 'var(--font-rajdhani)' }}>Create Event</h3>
+                <div className="p-2 rounded-xl bg-bg-tertiary border border-border-default text-primary">
+                  <CalendarPlus size={18} strokeWidth={1.75} />
+                </div>
+              </div>
+              <p className="text-xs text-text-secondary">A rotating QR code will be auto-generated.</p>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-text-primary">Event Name *</label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Tech Seminar 2026"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-border-default bg-bg-primary text-sm text-text-primary focus:outline-none focus:border-primary"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-text-primary">Host Name *</label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Dr. Jane Smith"
+                value={hostName}
+                onChange={e => setHostName(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-border-default bg-bg-primary text-sm text-text-primary focus:outline-none focus:border-primary"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-text-primary">Description</label>
+              <textarea
+                rows={2}
+                placeholder="Brief event details or agenda..."
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-border-default bg-bg-primary text-sm text-text-primary focus:outline-none focus:border-primary resize-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-text-primary">Date *</label>
+                <input
+                  type="date"
+                  required
+                  value={sessionDate}
+                  onChange={e => setSessionDate(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl border border-border-default bg-bg-primary text-sm text-text-primary focus:outline-none focus:border-primary font-mono"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-text-primary">Duration (hrs)</label>
+                <select
+                  value={durationHrs}
+                  onChange={e => setDurationHrs(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl border border-border-default bg-bg-primary text-sm text-text-primary focus:outline-none focus:border-primary"
+                >
+                  {['1', '2', '3', '4', '6', '8'].map(h => (
+                    <option key={h} value={h}>{h} hr{h !== '1' ? 's' : ''}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {schools.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-text-primary">School (optional)</label>
+                <select
+                  value={schoolId}
+                  onChange={e => setSchoolId(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl border border-border-default bg-bg-primary text-sm text-text-primary focus:outline-none focus:border-primary"
+                >
+                  <option value="">-- Use default school --</option>
+                  {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+            )}
+
+            {formErr && (
+              <div className="p-3 rounded-xl bg-error/10 border border-error/20 text-xs text-error font-medium flex items-center gap-2">
+                <AlertCircle size={14} className="flex-shrink-0" />
+                {formErr}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={creating || !name.trim() || !hostName.trim()}
+              className="w-full py-3 rounded-2xl bg-primary text-white text-sm font-bold hover:opacity-90 shadow-lg shadow-primary/25 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer transition-all"
+            >
+              {creating ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+              {creating ? 'Creating...' : 'Launch Event'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   )
